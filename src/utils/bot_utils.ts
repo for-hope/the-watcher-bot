@@ -1,9 +1,4 @@
-import {
-  Guild,
-  CategoryChannel,
-
-  TextChannel,
-} from "discord.js";
+import { Guild, CategoryChannel, TextChannel, Role } from "discord.js";
 
 //CONSTANTS
 
@@ -35,15 +30,14 @@ export const getOrCreateBotCategory = async (
 };
 
 export const overwritePortalPermissions = async (
-  channel: TextChannel,
-  guildId
+  channel: TextChannel
 ): Promise<void> => {
-  await channel.permissionOverwrites.edit(guildId, {
+  console.log("overwriting permissions " + channel.guild.roles.everyone);
+  await channel.permissionOverwrites.create(channel.guild.roles.everyone, {
     USE_EXTERNAL_EMOJIS: false,
     USE_EXTERNAL_STICKERS: false,
     USE_PRIVATE_THREADS: false,
     USE_PUBLIC_THREADS: false,
-    USE_APPLICATION_COMMANDS: false,
     SEND_TTS_MESSAGES: false,
   });
 };

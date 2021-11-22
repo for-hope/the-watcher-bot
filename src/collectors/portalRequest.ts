@@ -5,6 +5,7 @@ import {
 } from "discord.js";
 import { PortalResponses } from "../commands/connect";
 import { addServerOnPortal } from "../db/portalClient";
+import { hasManagerPermission } from "../utils/permissions";
 
 import {
   getOrCreateBotCategory,
@@ -17,6 +18,11 @@ export const portalRequestCollector = (filter, message, channel) => {
   });
 
   collector.on("collect", async (i: ButtonInteraction) => {
+    const hasPerms = await hasManagerPermission(i);
+    if (!hasPerms) {
+      return;
+    }
+
     if (i.customId === PortalResponses.approve) {
       const multiverseCategory = (
         await getOrCreateBotCategory(i.guild, PORTALS_CATEGORY_NAME)

@@ -13,22 +13,6 @@ module.exports = {
     }
 
     const client = message.client;
-    //check if message is in a valid BOT watched channel
-    if (message.channel.name === "gate-1") {
-      console.log("Interaction : " + JSON.stringify(message.reference));
-      //delete user message
-      message.delete();
-
-      const channels = client.channels.cache.filter(
-        (channel) => channel.name === "gate-1"
-      );
-
-      channels.forEach(async (channel) => {
-        await channel.send({
-          embeds: [getMessageEmbed(message)],
-        });
-      });
-    }
 
     //check if channel id is in a dimension
     channelDimension(message.channel.id).then(async (dimensionName) => {
@@ -50,6 +34,7 @@ module.exports = {
 const forwardMessageIfIncluded = (ids, message, client) => {
   if (ids.includes(message.channel.id)) {
     console.log(`message is included ` + message.cleanContent);
+    const originalMessageId = message.id;
     message.delete();
     const channels = client.channels.cache.filter((channel) => {
       return ids.includes(channel.id);
@@ -79,11 +64,11 @@ const getMessageEmbed = (messageObject) => {
       ? messageObject.attachments.first().url
       : "";
   const embed = new MessageEmbed()
-
+    .setAuthor(`${author.tag}`, author.avatarURL())
     .setDescription(message)
     .setColor(`#${rndColor()}`)
     .setTitle(`||\`${author.id}\`||`)
-    .setAuthor(`${author.tag}`, author.avatarURL())
+
     .setFooter(`${guild.name} • ID: ${guild.id}`, guild.iconURL());
 
   const url = extractUrlFromMessage(message);
@@ -97,7 +82,7 @@ const getMessageEmbed = (messageObject) => {
     embed.setImage(image);
   } else if (url) {
     // embed.setThumbnail(url[0]);
-    embed.setImage(url[0]);
+    // embed.setImage(url[0]);
     //set description message without url[0]
     embed.setDescription(message.replace(url[0], ""));
   }

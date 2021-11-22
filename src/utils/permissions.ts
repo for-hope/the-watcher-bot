@@ -24,14 +24,15 @@ export const hasManagerRole = async (
 export const hasBotManagerRole = async (
   interaction: CommandInteraction | ButtonInteraction
 ): Promise<boolean> => {
-  const adminRoleIds = await getAdminRoles(interaction.guild.id);
+  let adminRoleIds: string[] = await getAdminRoles(interaction.guild.id);
   if (!adminRoleIds) {
     return;
   }
 
-  const hasManagerRole: boolean = (
-    interaction.member.roles as GuildMemberRoleManager
-  ).cache.some((role: Role) => adminRoleIds.includes(role.id));
+  const roles = interaction.member.roles as GuildMemberRoleManager;
+  const hasManagerRole: boolean = roles.cache.some((role: Role) =>
+    adminRoleIds.includes(role.id)
+  );
 
   if (!hasManagerRole) {
     return;
@@ -46,9 +47,21 @@ export const hasManagerPermission = async (
   const managerRole = await hasManagerRole(interaction);
   const botManagerRole = await hasBotManagerRole(interaction);
   if (!managerRole && !botManagerRole) {
-    await interaction.reply(
-      "You do not have the required permissions [`Manage Server`] to setup the server."
-    );
+    const adminRoleIds = await getAdminRoles(interaction.guild.id);
+    console.log(adminRoleIds);
+    await interaction.reply({
+      content: `You do not have the required permissions [
+          ${!managerRole ? "`Manage Server` " : ""}
+          ${
+            !botManagerRole && adminRoleIds
+              ? adminRoleIds
+                  .map((adminRoleId) => `<@&${adminRoleId}">`)
+                  .join(" ")
+              : ""
+          }   
+     ] to use this interaction.`,
+      ephemeral: true,
+    });
     return;
   }
   return true;

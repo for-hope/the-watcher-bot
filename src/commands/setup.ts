@@ -1,6 +1,12 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { ChannelType } from "discord-api-types/payloads/v9";
-import { CommandInteraction, GuildTextBasedChannel, Role } from "discord.js";
+import {
+  CommandInteraction,
+  GuildMember,
+  GuildTextBasedChannel,
+  Permissions,
+  Role,
+} from "discord.js";
 import { setupServer } from "../db/serversClient";
 import { hasManagerPermission } from "../utils/permissions";
 import {
@@ -60,25 +66,25 @@ module.exports = {
         await getOrCreateBotCategory(interaction.guild, "multiverse")
       ).category;
 
-      trafficChannel = await interaction.guild.channels.create("traffic", {
+      trafficChannel = await interaction.guild.channels.create("trafficWORKED", {
         type: "GUILD_TEXT",
       });
+      await trafficChannel.setParent(category.id);
 
       if (adminRole) {
-        await trafficChannel.permissionOverwrites.edit(adminRole, {
+        await trafficChannel.permissionOverwrites.create(adminRole, {
           VIEW_CHANNEL: true,
           SEND_MESSAGES: true,
           READ_MESSAGE_HISTORY: true,
         });
 
-        await trafficChannel.permissionOverwrites.edit(interaction.guild.id, {
+        await trafficChannel.permissionOverwrites.create(interaction.guild.id, {
           VIEW_CHANNEL: false,
           SEND_MESSAGES: false,
           READ_MESSAGE_HISTORY: false,
         });
       }
-      await overwritePortalPermissions(trafficChannel, interaction.guild.id);
-      await trafficChannel.setParent(category.id);
+      await overwritePortalPermissions(trafficChannel);
     }
 
     if (multiverseChatChannel) {
