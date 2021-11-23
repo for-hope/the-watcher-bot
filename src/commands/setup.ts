@@ -66,12 +66,9 @@ module.exports = {
         await getOrCreateBotCategory(interaction.guild, "multiverse")
       ).category;
 
-      trafficChannel = await interaction.guild.channels.create(
-        "traffic",
-        {
-          type: "GUILD_TEXT",
-        }
-      );
+      trafficChannel = await interaction.guild.channels.create("traffic", {
+        type: "GUILD_TEXT",
+      });
       await trafficChannel.setParent(category.id);
 
       if (adminRole) {
@@ -96,7 +93,7 @@ module.exports = {
 
     //send a message to the traffic channel
     await trafficChannel.send(
-      TRAFFIC_CHANNEL_SETUP(interaction.member as GuildMember)
+      TRAFFIC_CHANNEL_SETUP(interaction.member as GuildMember, adminRole)
     );
 
     await setupServer(
