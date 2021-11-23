@@ -4,7 +4,7 @@ import {
   GuildTextBasedChannel,
 } from "discord.js";
 import { PortalResponses } from "../commands/connect";
-import { addServerOnPortal } from "../db/portalClient";
+import { addOrUpdateServerOnPortal, PortalRequest } from "../db/portalClient";
 import { hasManagerPermission } from "../utils/permissions";
 
 import {
@@ -35,10 +35,14 @@ export const portalRequestCollector = (filter, message, channel) => {
       });
       //mention the channel
       const channelMention = portalChannel.toString();
-      const channelIdsOnPortal = await addServerOnPortal(
+      const channelIdsOnPortal = await addOrUpdateServerOnPortal(
         channel.id,
         portalChannel.id,
-        i.guildId
+        i.guildId,
+        PortalRequest.approved,
+        null,
+        null,
+        i.client
       );
 
       channelIdsOnPortal.forEach(async (channelId) => {
@@ -55,6 +59,15 @@ export const portalRequestCollector = (filter, message, channel) => {
         components: [],
       });
     } else if (i.customId === PortalResponses.deny) {
+      const channelIdsOnPortal = await addOrUpdateServerOnPortal(
+        channel.id,
+        null,
+        i.guildId,
+        PortalRequest.denied,
+        null,
+        null,
+        i.client
+      );
       await i.update({
         content: "❌ Portal request denied",
         components: [],

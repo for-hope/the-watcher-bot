@@ -3,7 +3,7 @@ import { Client, Intents, Collection, Message } from "discord.js";
 import { token } from "./config.json";
 import path from "path";
 import { readdir, readdirSync } from "fs";
-import { connectDb } from './db/dbClient';
+import { connectDb } from "./db/dbClient";
 
 export interface runEvent {
   message: Message;

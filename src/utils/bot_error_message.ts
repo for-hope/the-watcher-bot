@@ -1,0 +1,1 @@
+const SELF_NO_TRAFFIC_CHANNEL = "I can't find a traffic channel in this server! make sure to do `/setup` and have a valid traffic channel to recieve and request private portal connections from other servers!";

@@ -1,4 +1,9 @@
-import { GuildMember, GuildTextBasedChannel, Role } from "discord.js";
+import {
+  Guild,
+  GuildMember,
+  GuildTextBasedChannel,
+  Role,
+} from "discord.js";
 
 export const TRAFFIC_CHANNEL_SETUP = (
   member: GuildMember,
@@ -20,4 +25,17 @@ export const BOT_SETUP_REPLY = (
   trafficChannel: GuildTextBasedChannel
 ): string => {
   return `:white_check_mark:  Setup is complete! You can now recieve portal connection requests on ${trafficChannel.toString()}`;
+};
+
+export const PORTAL_REQUEST_SENT = (
+  invitedGuild: Guild,
+  trafficChannel: GuildTextBasedChannel
+) => {
+  return `:white_check_mark: Portal request sent to ${invitedGuild.name} \`${
+    invitedGuild.id
+  }\`. ${
+    trafficChannel
+      ? `You can check the request status in ${trafficChannel.toString()}`
+      : `You cannot check the request status because you don't have a valid traffic channel.`
+  }`;
 };

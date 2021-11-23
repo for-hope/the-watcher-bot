@@ -1,4 +1,4 @@
-import { BaseGuildTextChannel, Channel, Guild, NSFWLevel } from "discord.js";
+import { Guild, NSFWLevel, GuildTextBasedChannel } from "discord.js";
 import mongoose, { model, Document } from "mongoose";
 
 export const SERVER_MODEL = "Server";
@@ -20,7 +20,7 @@ interface IServer {
 }
 
 interface IServerDocument extends IServer, Document {
-  trafficChannel: (server: any) => BaseGuildTextChannel | undefined;
+  trafficChannel: (server: any) => GuildTextBasedChannel | undefined;
 }
 
 const serverSchema = new mongoose.Schema<IServerDocument>({
@@ -50,22 +50,22 @@ const serverSchema = new mongoose.Schema<IServerDocument>({
 
 serverSchema.methods.trafficChannel = function (
   this: IServerDocument,
-  server: any
-): BaseGuildTextChannel | undefined {
+  server: Guild
+): GuildTextBasedChannel | undefined {
   if (!this.trafficChannelId) {
     return;
   }
   const trafficChannel = server.channels.cache.find(
     (c) => c.id === this.trafficChannelId
   );
-  return trafficChannel;
+  return trafficChannel as GuildTextBasedChannel;
 };
 
 const Server = model<IServerDocument>(SERVER_MODEL, serverSchema);
 
 export const getTrafficChannel = async (
   server: Guild
-): Promise<BaseGuildTextChannel | undefined> => {
+): Promise<GuildTextBasedChannel | undefined> => {
   const serverModel = await Server.findOne({ serverId: server.id });
   if (!serverModel) {
     return;
