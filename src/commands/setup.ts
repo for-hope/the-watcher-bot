@@ -4,11 +4,11 @@ import {
   CommandInteraction,
   GuildMember,
   GuildTextBasedChannel,
-  Permissions,
   Role,
 } from "discord.js";
 import { setupServer } from "../db/serversClient";
 import { hasManagerPermission } from "../utils/permissions";
+import { BOT_SETUP_REPLY, TRAFFIC_CHANNEL_SETUP } from "../utils/bot_messages";
 import {
   getOrCreateBotCategory,
   overwritePortalPermissions,
@@ -66,9 +66,12 @@ module.exports = {
         await getOrCreateBotCategory(interaction.guild, "multiverse")
       ).category;
 
-      trafficChannel = await interaction.guild.channels.create("trafficWORKED", {
-        type: "GUILD_TEXT",
-      });
+      trafficChannel = await interaction.guild.channels.create(
+        "traffic",
+        {
+          type: "GUILD_TEXT",
+        }
+      );
       await trafficChannel.setParent(category.id);
 
       if (adminRole) {
@@ -91,6 +94,11 @@ module.exports = {
       await multiverseChatChannel.setParent(trafficChannel.parentId);
     }
 
+    //send a message to the traffic channel
+    await trafficChannel.send(
+      TRAFFIC_CHANNEL_SETUP(interaction.member as GuildMember)
+    );
+
     await setupServer(
       interaction.guild.id,
       trafficChannel.id,
@@ -99,9 +107,6 @@ module.exports = {
       false
     );
 
-    //send setup is done on the traffic channel
-    await interaction.reply(
-      `:white_check_mark:  Setup is complete! You can now use the \`!connect\` command to connect to other servers. You can also recieve portal connection requests on ${trafficChannel.toString()}`
-    );
+    await interaction.reply(BOT_SETUP_REPLY(trafficChannel));
   },
 };
