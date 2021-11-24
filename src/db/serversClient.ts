@@ -65,12 +65,15 @@ const Server = model<IServerDocument>(SERVER_MODEL, serverSchema);
 
 export const getTrafficChannel = async (
   server: Guild
-): Promise<GuildTextBasedChannel | undefined> => {
+): Promise<GuildTextBasedChannel> => {
   const serverModel = await Server.findOne({ serverId: server.id });
   if (!serverModel) {
-    return;
+    throw new Error("Traffic channel not found");
   }
   const trafficChannel = serverModel.trafficChannel(server);
+  if (!trafficChannel) {
+    throw new Error("Traffic channel not found");
+  }
   return trafficChannel;
 };
 

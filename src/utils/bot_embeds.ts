@@ -4,7 +4,16 @@ import {
   MessageEmbed,
   GuildMember,
   Guild,
+  ClientUser,
 } from "discord.js";
+import { PortalRequestEmojis } from "./decoration";
+
+export const CONNECTION_REQUEST_STATUS = (portalRequest: PortalRequest) => {
+  const portalRequestString = portalRequest
+    .toString()
+    .toLowerCase() as keyof typeof PortalRequestEmojis;
+  return `${portalRequest} ${PortalRequestEmojis[portalRequestString]}`;
+};
 
 export const CONNECTION_REQUEST_SENT = (
   interaction: CommandInteraction,
@@ -12,20 +21,28 @@ export const CONNECTION_REQUEST_SENT = (
 ): MessageEmbed => {
   //create embed
   const author = interaction.member as GuildMember;
-  const guild: Guild = interaction.guild;
+  const guild = interaction.guild as Guild;
+  const clientUser = guild.client.user as ClientUser;
+
   return new MessageEmbed()
     .setColor(0x0099ff)
-    .setAuthor(`${author.user.tag}`, author.user.avatarURL())
-    .setTitle(`:cyclone: Connection Request - ${guild.toString()}`)
+    .setAuthor(
+      `${author.user.tag}`,
+      author.user.avatarURL() || author.user.defaultAvatarURL
+    )
+    .setTitle(`:cyclone: Portal Request - ${guild.toString()}`)
     .setDescription(
-      `:electric_plug: A Connection request has been successfully sent to **${guild.toString()}**\`${
-        guild.id
-      }\`\n`
+      `📩 A Connection request has been successfully sent to:
+       **${guild.toString()}**\`${guild.id}\`\n`
     )
     .setFields({
       name: "Status",
-      value: `${portalRequest}`,
+      value: CONNECTION_REQUEST_STATUS(portalRequest),
     })
     .setTimestamp()
-    .setFooter(`${guild.client.user.username}`, author.guild.iconURL());
+    .setThumbnail(guild.iconURL() as string) //TODO test
+    .setFooter(
+      `${clientUser.tag}`,
+      clientUser.avatarURL() || clientUser.defaultAvatarURL
+    );
 };

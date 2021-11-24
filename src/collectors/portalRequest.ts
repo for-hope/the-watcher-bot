@@ -1,7 +1,12 @@
 import {
   ButtonInteraction,
+  CacheType,
   CategoryChannel,
+  CollectorFilter,
+  Guild,
   GuildTextBasedChannel,
+  Message,
+  MessageComponentInteraction,
 } from "discord.js";
 import { PortalResponses } from "../commands/connect";
 import { addOrUpdateServerOnPortal, PortalRequest } from "../db/portalClient";
@@ -12,7 +17,11 @@ import {
   PORTALS_CATEGORY_NAME,
 } from "../utils/bot_utils";
 
-export const portalRequestCollector = (filter, message, channel) => {
+export const portalRequestCollector = (
+  filter: any,
+  message: Message,
+  channel: GuildTextBasedChannel
+) => {
   const collector = message.createMessageComponentCollector({
     filter,
   });
@@ -22,14 +31,14 @@ export const portalRequestCollector = (filter, message, channel) => {
     if (!hasPerms) {
       return;
     }
-
+    const guild = i.guild as Guild;
     if (i.customId === PortalResponses.approve) {
       const multiverseCategory = (
-        await getOrCreateBotCategory(i.guild, PORTALS_CATEGORY_NAME)
+        await getOrCreateBotCategory(guild, PORTALS_CATEGORY_NAME)
       ).category;
 
       //create the channel
-      const portalChannel = await i.guild.channels.create(channel.name, {
+      const portalChannel = await guild.channels.create(channel.name, {
         type: "GUILD_TEXT",
         parent: multiverseCategory as CategoryChannel,
       });
@@ -50,7 +59,7 @@ export const portalRequestCollector = (filter, message, channel) => {
           (clientChannel) => clientChannel.id === channelId
         ) as GuildTextBasedChannel;
         await channelById.send(
-          `:white_check_mark: **${i.user.tag}** from **${i.guild.name}** approved the portal request! You may now use this channel to communicate between servers.`
+          `:white_check_mark: **${i.user.tag}** from **${guild.name}** approved the portal request! You may now use this channel to communicate between servers.`
         );
       });
 
@@ -61,7 +70,7 @@ export const portalRequestCollector = (filter, message, channel) => {
     } else if (i.customId === PortalResponses.deny) {
       const channelIdsOnPortal = await addOrUpdateServerOnPortal(
         channel.id,
-        null,
+        "",
         i.guildId,
         PortalRequest.denied,
         null,

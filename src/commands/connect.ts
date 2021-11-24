@@ -10,7 +10,6 @@ import {
 import { hasManagerPermission } from "../utils/permissions";
 import { CONNECTION_REQUEST_SENT } from "../utils/bot_embeds";
 import { PORTAL_REQUEST_SENT } from "../utils/bot_messages";
-import { Guild } from "discord.js";
 
 import {
   ButtonInteraction,
@@ -19,7 +18,13 @@ import {
   MessageActionRow,
   MessageButton,
   MessageEmbed,
+  ClientUser,
+  Guild,
+  User,
 } from "discord.js";
+import { ChannelType } from "discord-api-types/payloads/v9";
+import { Validators } from "../utils/validators";
+import { getGuild } from "../utils/bot_utils";
 
 export enum PortalResponses {
   approve = "PortalApprove",
@@ -27,22 +32,22 @@ export enum PortalResponses {
 }
 
 const channelToSend = async (
-  interaction,
-  serverId: String
-): Promise<GuildTextBasedChannel | undefined> => {
-  //check if bot is in the server by id
-  const server = await interaction.client.guilds.fetch(serverId);
-  if (!server) {
-    interaction.reply("I'm not in that server!");
-    return;
+  interaction: CommandInteraction | ButtonInteraction,
+  serverId: string
+): Promise<GuildTextBasedChannel> => {
+  let server: Guild;
+  try {
+    server = getGuild(interaction.client, serverId);
+  } catch (e: any) {
+    throw new Error(e.message);
   }
+
   //send message to server in a channel called border-control
   const trafficChannel = await getTrafficChannel(server);
   if (!trafficChannel) {
-    interaction.reply(
+    throw new Error(
       "I can't find a traffic channel in the server! Please let them know to `/setup` the bot correctly."
     );
-    return;
   }
   return trafficChannel;
 };
@@ -60,26 +65,27 @@ const messageActionRow = () => {
   );
 };
 
-const embedMessage = (interaction, channel) => {
+const embedMessage = (
+  interaction: CommandInteraction | ButtonInteraction,
+  channel: GuildTextBasedChannel
+) => {
+  const author = interaction.member.user as User;
+  const guild = interaction.guild as Guild;
+  const clientUser = interaction.client.user as ClientUser;
   return new MessageEmbed()
     .setColor("#0099ff")
-    .setTitle(
-      `${interaction.member.user.tag} \`${interaction.member.user.id}\``
-    )
+    .setTitle(`${author.tag} \`${author.id}\``)
     .setDescription(
-      `**${interaction.member.user.username}** wants to open a portal connection on
+      `**${author.username}** wants to open a portal connection on
       \`#${channel.name}\``
     )
-    .setAuthor(interaction.guild.name, interaction.guild.iconURL())
+    .setAuthor(guild.name, guild.iconURL() as string | undefined)
     .setTimestamp()
     .setFields({
       name: "Servers",
-      value: `${interaction.guild.name} \`${interaction.guild.id}\``,
+      value: `${guild.name} \`${guild.id}\``,
     })
-    .setFooter(
-      interaction.client.user.tag,
-      interaction.client.user.avatarURL()
-    );
+    .setFooter(clientUser.tag, clientUser.avatarURL() as string | undefined);
 };
 
 module.exports = {
@@ -98,31 +104,33 @@ module.exports = {
       option
         .setName("channel")
         .setDescription("Specify the channel to open a connection on")
+        .addChannelType(ChannelType.GuildText)
         .setRequired(true)
     ),
   async execute(interaction: CommandInteraction) {
     const hasPerms = await hasManagerPermission(interaction);
     if (!hasPerms) return;
 
-    //GET PARAMS
-    const channel = interaction.options.getChannel(
+    const channelToOpenPortalOn = interaction.options.getChannel(
       "channel"
     ) as GuildTextBasedChannel;
-    const serverId = interaction.options.getString("server_id");
+    const serverId = interaction.options.getString("server_id") as string;
+
     let invitedGuild: Guild;
+
     try {
-      invitedGuild = await interaction.client.guilds.fetch(serverId);
-    } catch (e) {
-      interaction.reply("Cannot connect to that server!");
+      invitedGuild = getGuild(interaction.client, serverId);
+    } catch (e: any) {
+      interaction.reply(e.message);
       return;
     }
 
     // Add server and other info into the database
 
     // Send the portal request
-    await sendPortalRequest(interaction, serverId, channel);
+    await sendPortalRequest(interaction, serverId, channelToOpenPortalOn);
 
-    const trafficChannel = await getTrafficChannel(interaction.guild);
+    const trafficChannel = await getTrafficChannel(interaction.guild as Guild);
     let connectionRequestMessageId = "";
 
     if (!trafficChannel) {
@@ -133,9 +141,13 @@ module.exports = {
       });
       connectionRequestMessageId = connectionRequestStatusMessage.id;
     }
-    await createServerOnPortal(channel.name, interaction, channel.id);
+    await createServerOnPortal(
+      channelToOpenPortalOn.name,
+      interaction,
+      channelToOpenPortalOn.id
+    );
     await addOrUpdateServerOnPortal(
-      channel.id,
+      channelToOpenPortalOn.id,
       "",
       serverId,
       PortalRequest.pending,
@@ -148,8 +160,8 @@ module.exports = {
 };
 
 const sendPortalRequest = async (
-  interaction,
-  serverId: String,
+  interaction: CommandInteraction,
+  serverId: string,
   channel: GuildTextBasedChannel
 ): Promise<void> => {
   //Get the other server's border channel.

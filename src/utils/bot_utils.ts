@@ -1,12 +1,8 @@
-import { Guild, CategoryChannel, TextChannel, Role } from "discord.js";
+import { Guild, CategoryChannel, TextChannel, Role, Client } from "discord.js";
 
 //CONSTANTS
 
 export const PORTALS_CATEGORY_NAME = "Portals";
-
-export const isBotOnServer = (serverId: string, client: any): boolean => {
-  return client.guilds.cache.find((guild) => guild.name === serverId);
-};
 
 export const getOrCreateBotCategory = async (
   guild: Guild,
@@ -40,4 +36,14 @@ export const overwritePortalPermissions = async (
     USE_PUBLIC_THREADS: false,
     SEND_TTS_MESSAGES: false,
   });
+};
+
+export const getGuild = (client: Client, guildId: string): Guild => {
+  const guild = client.guilds.cache.find((guild) => guild.id === guildId);
+  if (!guild) {
+    throw new Error(
+      "Cannot connect to that server! Make sure I'm a member and setup correctly in that server."
+    );
+  }
+  return guild;
 };

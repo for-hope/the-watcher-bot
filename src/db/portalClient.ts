@@ -1,6 +1,7 @@
 import { Client, CommandInteraction, TextChannel } from "discord.js";
 import mongoose, { model } from "mongoose";
 import { IDimension } from "./dimensionClient";
+import { CONNECTION_REQUEST_STATUS } from "../utils/bot_embeds";
 
 export const PORTAL_MODEL = "Portal";
 
@@ -25,8 +26,7 @@ interface IPortal extends Omit<IDimension, "servers"> {
 export enum PortalRequest {
   approved = "Approved",
   denied = "Denied",
-  pending = "Pending :arrows_counterclockwise:",
-  joined = "Joined",
+  pending = "Pending",
   left = "Left",
   banned = "Banned",
   unkown = "Unknown",
@@ -76,7 +76,9 @@ export const portalChannels = async (
   //get all server channels with portal name
   try {
     const portal = await Portal.findOne({ originChannelId: originChannelId });
-
+    if (!portal) {
+      return [];
+    }
     const channels = portal.servers.map((server) => server.channel_id);
 
     return channels;
@@ -113,8 +115,8 @@ export const addOrUpdateServerOnPortal = async (
         channel_id: channelId,
         server_status: serverStatus,
         requestMessage: {
-          id: requestMessageId,
-          channel_id: requestMessageChannelId,
+          id: requestMessageId || "",
+          channel_id: requestMessageChannelId || "",
         },
       });
     } else {
@@ -132,8 +134,9 @@ export const addOrUpdateServerOnPortal = async (
       }
     }
     const reqMsgChannelId: string =
-      requestMessageChannelId || server.requestMessage.channel_id;
-    const reqMsgId: string = requestMessageId || server.requestMessage.id;
+      requestMessageChannelId || server?.requestMessage.channel_id || "";
+    const reqMsgId: string =
+      requestMessageId || server?.requestMessage.id || "";
     if (client) {
       console.log("Request message exists");
       const channel = client.channels.cache.get(reqMsgChannelId) as TextChannel;
@@ -142,7 +145,7 @@ export const addOrUpdateServerOnPortal = async (
         console.log("Message exists");
         //edit message
         const embed = msg.embeds[0];
-        embed.fields[0].value = serverStatus;
+        embed.fields[0].value = CONNECTION_REQUEST_STATUS(serverStatus);
         await msg.edit({ embeds: [embed] });
       }
     }
@@ -150,7 +153,7 @@ export const addOrUpdateServerOnPortal = async (
     await portal.save();
     console.log("Portal updated!");
     return portal.servers.map((server) => server.channel_id);
-  } catch (err) {
+  } catch (err: any) {
     console.log("Can't update portal Err: " + err.toString());
     return [];
   }
@@ -182,7 +185,7 @@ export const createServerOnPortal = async (
         {
           server_id: serverId,
           channel_id: channelId,
-          server_status: PortalRequest.joined,
+          server_status: PortalRequest.approved,
         },
       ],
     });

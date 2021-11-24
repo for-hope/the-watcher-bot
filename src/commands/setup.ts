@@ -2,6 +2,7 @@ import { SlashCommandBuilder } from "@discordjs/builders";
 import { ChannelType } from "discord-api-types/payloads/v9";
 import {
   CommandInteraction,
+  Guild,
   GuildMember,
   GuildTextBasedChannel,
   Role,
@@ -40,6 +41,7 @@ module.exports = {
         .setDescription(
           "Creates a general portal channel to all other servers within the bot's reach."
         )
+
         .setRequired(false)
     ),
   async execute(interaction: CommandInteraction) {
@@ -48,25 +50,25 @@ module.exports = {
     const hasPerms = await hasManagerPermission(interaction);
     if (!hasPerms) return;
 
+    const guild = interaction.guild as Guild;
     let trafficChannel = interaction.options.getChannel(
       "traffic-channel"
     ) as GuildTextBasedChannel;
 
-    const adminRole = interaction.options.getRole("role") as Role;
+    const adminRole = interaction.options.getRole("role") as Role | undefined;
     const multiverseChat: boolean =
-      interaction.options.getBoolean("multiverse-chat");
+      interaction.options.getBoolean("multiverse-chat") || true;
 
     const multiverseChatChannel = multiverseChat
-      ? await interaction.guild.channels.create("Multiverse Chat", {
+      ? await guild.channels.create("Multiverse Chat", {
           type: "GUILD_TEXT",
         })
       : null;
     if (!trafficChannel) {
-      const category = (
-        await getOrCreateBotCategory(interaction.guild, "multiverse")
-      ).category;
+      const category = (await getOrCreateBotCategory(guild, "multiverse"))
+        .category;
 
-      trafficChannel = await interaction.guild.channels.create("traffic", {
+      trafficChannel = await guild.channels.create("traffic", {
         type: "GUILD_TEXT",
       });
       await trafficChannel.setParent(category.id);
@@ -78,7 +80,7 @@ module.exports = {
           READ_MESSAGE_HISTORY: true,
         });
 
-        await trafficChannel.permissionOverwrites.create(interaction.guild.id, {
+        await trafficChannel.permissionOverwrites.create(guild.id, {
           VIEW_CHANNEL: false,
           SEND_MESSAGES: false,
           READ_MESSAGE_HISTORY: false,
@@ -97,9 +99,9 @@ module.exports = {
     );
 
     await setupServer(
-      interaction.guild.id,
+      guild.id,
       trafficChannel.id,
-      multiverseChatChannel ? multiverseChatChannel.id : null,
+      multiverseChatChannel ? multiverseChatChannel.id : undefined,
       adminRole ? [adminRole.id] : [],
       false
     );
