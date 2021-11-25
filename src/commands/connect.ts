@@ -25,11 +25,14 @@ import {
 import { ChannelType } from "discord-api-types/payloads/v9";
 import { Validators } from "../utils/validators";
 import { getGuild } from "../utils/bot_utils";
+import { ConnectValidator } from "../validators/connectValidator";
 
 export enum PortalResponses {
   approve = "PortalApprove",
   deny = "PortalDeny",
 }
+
+const CONNECT_COMMAND = "/connect";
 
 const channelToSend = async (
   interaction: CommandInteraction | ButtonInteraction,
@@ -108,8 +111,11 @@ module.exports = {
         .setRequired(true)
     ),
   async execute(interaction: CommandInteraction) {
-    const hasPerms = await hasManagerPermission(interaction);
-    if (!hasPerms) return;
+    const connectValidator = new ConnectValidator(interaction);
+
+    if (!(await connectValidator.validate())) {
+      return;
+    }
 
     const channelToOpenPortalOn = interaction.options.getChannel(
       "channel"
@@ -137,7 +143,13 @@ module.exports = {
       interaction.reply(SELF_NO_TRAFFIC_CHANNEL);
     } else {
       const connectionRequestStatusMessage = await trafficChannel.send({
-        embeds: [CONNECTION_REQUEST_SENT(interaction, PortalRequest.pending)],
+        embeds: [
+          CONNECTION_REQUEST_SENT(
+            interaction,
+            PortalRequest.pending,
+            invitedGuild
+          ),
+        ],
       });
       connectionRequestMessageId = connectionRequestStatusMessage.id;
     }

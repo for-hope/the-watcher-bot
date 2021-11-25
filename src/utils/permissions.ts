@@ -1,6 +1,7 @@
 import {
   ButtonInteraction,
   CommandInteraction,
+  Guild,
   GuildMemberRoleManager,
   Permissions,
   Role,
@@ -10,12 +11,12 @@ import { getAdminRoles } from "../db/serversClient";
 export const hasManagerRole = async (
   interaction: CommandInteraction | ButtonInteraction
 ): Promise<boolean> => {
-  const hasManagerPermission = interaction.memberPermissions.has(
+  const hasManagerPermission = interaction.memberPermissions?.has(
     Permissions.FLAGS.MANAGE_GUILD
   );
 
   if (!hasManagerPermission) {
-    return;
+    return false;
   }
 
   return true;
@@ -24,18 +25,18 @@ export const hasManagerRole = async (
 export const hasBotManagerRole = async (
   interaction: CommandInteraction | ButtonInteraction
 ): Promise<boolean> => {
-  let adminRoleIds: string[] = await getAdminRoles(interaction.guild.id);
+  let adminRoleIds = await getAdminRoles((interaction.guild as Guild).id);
   if (!adminRoleIds) {
-    return;
+    return false;
   }
 
   const roles = interaction.member.roles as GuildMemberRoleManager;
   const hasManagerRole: boolean = roles.cache.some((role: Role) =>
-    adminRoleIds.includes(role.id)
+    (adminRoleIds as string[]).includes(role.id)
   );
 
   if (!hasManagerRole) {
-    return;
+    return false;
   }
 
   return true;
@@ -47,7 +48,7 @@ export const hasManagerPermission = async (
   const managerRole = await hasManagerRole(interaction);
   const botManagerRole = await hasBotManagerRole(interaction);
   if (!managerRole && !botManagerRole) {
-    const adminRoleIds = await getAdminRoles(interaction.guild.id);
+    const adminRoleIds = await getAdminRoles((interaction.guild as Guild).id);
     console.log(adminRoleIds);
     await interaction.reply({
       content: `You do not have the required permissions [
@@ -62,7 +63,7 @@ export const hasManagerPermission = async (
      ] to use this interaction.`,
       ephemeral: true,
     });
-    return;
+    return false;
   }
   return true;
 };

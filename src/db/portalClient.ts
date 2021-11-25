@@ -29,6 +29,7 @@ export enum PortalRequest {
   pending = "Pending",
   left = "Left",
   banned = "Banned",
+  canceled = "Canceled",
   unkown = "Unknown",
 }
 
@@ -87,6 +88,8 @@ export const portalChannels = async (
     return [];
   }
 };
+
+//TODO getserver method
 
 export const addOrUpdateServerOnPortal = async (
   originChannelId: string,
@@ -196,5 +199,33 @@ export const createServerOnPortal = async (
   } catch (err) {
     console.log(err);
     return false;
+  }
+};
+
+export const portalsByServerId = async (
+  serverId: string
+): Promise<Array<IPortal> | null> => {
+  try {
+    const portals = await Portal.find({
+      "servers.server_id": serverId,
+    });
+    return portals;
+  } catch (err) {
+    console.log("Error fetching portals : " + err);
+    return null;
+  }
+};
+
+export const portalByServersChannelId = async (
+  channelId: string
+): Promise<IPortal | null> => {
+  try {
+    const portal = await Portal.findOne({
+      "servers.channel_id": channelId,
+    });
+    return portal;
+  } catch (err) {
+    console.log("Error fetching portal : " + err);
+    return null;
   }
 };

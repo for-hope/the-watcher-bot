@@ -17,11 +17,12 @@ export const CONNECTION_REQUEST_STATUS = (portalRequest: PortalRequest) => {
 
 export const CONNECTION_REQUEST_SENT = (
   interaction: CommandInteraction,
-  portalRequest: PortalRequest
+  portalRequest: PortalRequest,
+  invitedGuild: Guild
 ): MessageEmbed => {
   //create embed
   const author = interaction.member as GuildMember;
-  const guild = interaction.guild as Guild;
+  const guild = invitedGuild;
   const clientUser = guild.client.user as ClientUser;
 
   return new MessageEmbed()

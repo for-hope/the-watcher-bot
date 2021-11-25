@@ -10,4 +10,5 @@ export enum PortalRequestEmojis {
   "left" = "🚪",
   "banned" = "🚫",
   "unknown" = "❓",
+  "cancelled" = "⛔",
 }
