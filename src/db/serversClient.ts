@@ -1,6 +1,14 @@
-import { Guild, NSFWLevel, GuildTextBasedChannel } from "discord.js";
+import {
+  Guild,
+  NSFWLevel,
+  GuildTextBasedChannel,
+  CommandInteraction,
+} from "discord.js";
 import mongoose, { model, Document } from "mongoose";
 import { getTextChannel } from "../utils/bot_utils";
+import { portalRequestEmbed } from "../views/embeds/portalRequestEmbed";
+import { portalRequestAction } from "../views/actions/portalRequestActions";
+import { PortalViews } from "../views/portalViews";
 
 export const SERVER_MODEL = "Server";
 
@@ -22,6 +30,11 @@ interface IServer {
 
 interface IServerDocument extends IServer, Document {
   trafficChannel: (server: any) => GuildTextBasedChannel | undefined;
+  invite: (
+    interaction: CommandInteraction,
+
+    channel: GuildTextBasedChannel
+  ) => Promise<void>;
 }
 
 const serverSchema = new mongoose.Schema<IServerDocument>({
@@ -49,6 +62,33 @@ const serverSchema = new mongoose.Schema<IServerDocument>({
   isSetup: { type: Boolean, required: true, unique: false, default: false },
 });
 
+const Server = model<IServerDocument>(SERVER_MODEL, serverSchema);
+
+serverSchema.methods.invite = async function (
+  interaction: CommandInteraction,
+  channel: GuildTextBasedChannel
+) {
+  const trafficChannelId = this.trafficChannelId;
+  if (!trafficChannelId) {
+    throw new Error(
+      "The other servers needs to set a traffic channel first. Let them know to use `!setup` to do that."
+    );
+  }
+  const trafficChannel = getTextChannel(interaction.client, trafficChannelId);
+  if (!trafficChannel) {
+    throw new Error(
+      "The other servers needs to set a traffic channel first. Let them know to use `!setup` to do that."
+    );
+  }
+  const messageContent = await PortalViews.request(
+    interaction,
+    channel,
+    this.serverId
+  );
+
+  await trafficChannel.send(messageContent);
+};
+
 serverSchema.methods.trafficChannel = function (
   this: IServerDocument,
   server: Guild
@@ -60,18 +100,20 @@ serverSchema.methods.trafficChannel = function (
   return trafficChannel as GuildTextBasedChannel;
 };
 
-const Server = model<IServerDocument>(SERVER_MODEL, serverSchema);
-
 export const getTrafficChannel = async (
   server: Guild
 ): Promise<GuildTextBasedChannel> => {
   const serverModel = await Server.findOne({ serverId: server.id });
   if (!serverModel) {
-    throw new Error("Traffic channel not found");
+    throw new Error(
+      "I can't find a traffic channel in the server! Please let them know to `/setup` the bot correctly."
+    );
   }
   const trafficChannel = serverModel.trafficChannel(server);
   if (!trafficChannel) {
-    throw new Error("Traffic channel not found for server " + server);
+    throw new Error(
+      "I can't find a traffic channel in the server! Please let them know to `/setup` the bot correctly."
+    );
   }
   return trafficChannel;
 };
@@ -135,7 +177,6 @@ export const getServerById = async (serverId: string) => {
     const server = await Server.findOne({ serverId });
     return server;
   } catch (error) {
-    console.error(error);
     throw new Error("Server not found");
   }
 };

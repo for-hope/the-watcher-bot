@@ -1,6 +1,5 @@
 import { Client, CommandInteraction, TextChannel } from "discord.js";
 import mongoose, { model, Document } from "mongoose";
-import { IDimension } from "./dimensionClient";
 import { CONNECTION_REQUEST_STATUS } from "../utils/bot_embeds";
 
 export const PORTAL_MODEL = "Portal";
@@ -195,7 +194,7 @@ export const createServerOnPortal = async (
   try {
     const authorId = interaction.user.id;
     const serverId = interaction.guildId;
-    let portal = await Portal.findOne({ originChannelId: channelId });
+    let portal = await Portal.findOne({ "servers.channel_id": channelId });
 
     if (portal) {
       console.log("Channel Already exists on other portal.");
