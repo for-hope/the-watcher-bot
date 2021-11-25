@@ -5,6 +5,9 @@ import path from "path";
 import { readdir, readdirSync } from "fs";
 import { connectDb } from "./db/dbClient";
 
+export interface ClientExpended extends Client {
+  commands?: Collection<string, (event: runEvent) => any>;
+}
 export interface runEvent {
   message: Message;
   client: Client;
@@ -14,9 +17,7 @@ export interface runEvent {
 
 const fileExtention = process.env.NODE_ENV === "development" ? ".ts" : ".js";
 console.log(`About to run on ` + process.env.NODE_ENV);
-export interface ClientExpended extends Client {
-  commands?: Collection<string[], (event: runEvent) => any>;
-}
+
 // Create a new client instance
 const client = new Client({
   intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES],
@@ -40,7 +41,7 @@ for (const file of eventFiles) {
   }
 }
 
-const commands: Collection<string[], (event: runEvent) => any> =
+const commands: Collection<string, (event: runEvent) => any> =
   new Collection();
 
 client.commands = commands;

@@ -1,12 +1,22 @@
-export const buttonInteraction = async (interaction): Promise<void> => {
+import {
+  ButtonInteraction,
+  CommandInteraction,
+  GuildTextBasedChannel,
+} from "discord.js";
+
+export const buttonInteraction = async (
+  interaction: ButtonInteraction | CommandInteraction
+): Promise<void> => {
   if (!interaction.isButton()) return;
   await teleportRequestButton(interaction);
 };
 
-const teleportRequestButton = async (interaction): Promise<void> => {
+const teleportRequestButton = async (
+  interaction: ButtonInteraction
+): Promise<void> => {
   console.log(
-    `${interaction.member.user.username} requested a teleport to ${interaction.channel.name}`
+    `${interaction.member.user.username} requested a teleport to ${
+      interaction.channel as GuildTextBasedChannel
+    }.`
   );
-
-
 };

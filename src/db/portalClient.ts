@@ -73,7 +73,7 @@ export const channelPortal = async (channelId: string): Promise<string> => {
 
 export const portalChannels = async (
   originChannelId: string
-): Promise<Array<String>> => {
+): Promise<Array<string>> => {
   //get all server channels with portal name
   try {
     const portal = await Portal.findOne({ originChannelId: originChannelId });

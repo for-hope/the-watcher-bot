@@ -1,10 +1,5 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
-import {
-  CommandInteraction,
-  GuildTextBasedChannel,
-  CategoryChannel,
-  Role,
-} from "discord.js";
+import { CommandInteraction, Role, Guild, TextChannel } from "discord.js";
 import { addServerToDimension } from "../db/dimensionClient";
 import { hasManagerPermission } from "../utils/permissions";
 import { getOrCreateBotCategory } from "../utils/bot_utils";
@@ -34,19 +29,21 @@ module.exports = {
     const hasPerms = await hasManagerPermission(interaction);
     if (!hasPerms) return;
 
-    const dimensionName = interaction.options.getString("dimension");
+    const dimensionName = interaction.options.getString("dimension") as string;
     const roleOnly = interaction.options.getRole("role") as Role;
 
     let multiverseCategory = (
-      await getOrCreateBotCategory(interaction.guild, "multiverse")
+      await getOrCreateBotCategory(interaction.guild as Guild, "multiverse")
     ).category;
 
     //create the channel
-    const portalChannel: GuildTextBasedChannel =
-      await interaction.guild.channels.create(dimensionName, {
+    const portalChannel = (await interaction.guild?.channels.create(
+      dimensionName,
+      {
         type: "GUILD_TEXT",
         parent: multiverseCategory,
-      });
+      }
+    )) as TextChannel;
 
     if (roleOnly) {
       await portalChannel.permissionOverwrites.edit(roleOnly, {

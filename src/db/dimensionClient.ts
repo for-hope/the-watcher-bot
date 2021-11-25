@@ -38,11 +38,13 @@ export const channelDimension = async (channelId: string): Promise<string> => {
 
 export const dimensionChannels = async (
   dimensionName: string
-): Promise<Array<String>> => {
+): Promise<Array<string>> => {
   //get all server channels with dimension name
   try {
     const dimension = await Dimension.findOne({ name: dimensionName });
-
+    if (!dimension) {
+      return [];
+    }
     const channels = dimension.servers.map((server) => server.channel_id);
 
     return channels;

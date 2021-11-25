@@ -1,5 +1,5 @@
 import { newServer } from "../db/serversClient";
-import { BaseGuildTextChannel, Guild } from "discord.js";
+import { BaseGuildTextChannel, Guild, GuildMember } from "discord.js";
 
 const dmOwnerOrServer = async (guild: Guild) => {
   const owner = await guild.fetchOwner();
@@ -16,7 +16,7 @@ const dmOwnerOrServer = async (guild: Guild) => {
         (c) =>
           c.name.includes("bot") &&
           c.type === "GUILD_TEXT" &&
-          c.permissionsFor(guild.me).has("SEND_MESSAGES")
+          c.permissionsFor(guild.me as GuildMember).has("SEND_MESSAGES")
       ) as BaseGuildTextChannel;
       if (botChannel) {
         await botChannel.send(msg);

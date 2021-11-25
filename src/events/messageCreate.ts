@@ -1,13 +1,11 @@
-import { ColorResolvable, MessageEmbed } from "discord.js";
-import { model } from "mongoose";
-import channelIds from "../db/channel.json";
+import { Client, Message, MessageEmbed, TextChannel, Guild } from "discord.js";
 import { randomColor } from "../utils/decoration";
 import { channelDimension, dimensionChannels } from "../db/dimensionClient";
 import { channelPortal, portalChannels } from "../db/portalClient";
 
 module.exports = {
   name: "messageCreate",
-  execute(message) {
+  execute(message: Message) {
     if (message.author.bot) {
       return;
     }
@@ -31,7 +29,11 @@ module.exports = {
   },
 };
 
-const forwardMessageIfIncluded = (ids, message, client) => {
+const forwardMessageIfIncluded = (
+  ids: string[],
+  message: Message,
+  client: Client
+) => {
   if (ids.includes(message.channel.id)) {
     console.log(`message is included ` + message.cleanContent);
     const originalMessageId = message.id;
@@ -41,50 +43,54 @@ const forwardMessageIfIncluded = (ids, message, client) => {
     });
 
     channels.forEach(async (channel) => {
-      await channel.send({
-        embeds: [getMessageEmbed(message)],
-      });
+      if (channel instanceof TextChannel) {
+        await channel.send({
+          embeds: [getMessageEmbed(message)],
+        });
+      }
     });
   }
 };
-const extractUrlFromMessage = (message) => {
+const extractUrlFromMessage = (message: string) => {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const url = message.match(urlRegex);
   return url;
 };
 
-const getMessageEmbed = (messageObject) => {
-  const message = messageObject.content.replaceAll("@every", "@ every");
+const getMessageEmbed = (messageObject: Message) => {
+  const message = messageObject.cleanContent;
 
   const author = messageObject.author;
-  const guild = messageObject.guild;
+  const guild = messageObject.guild as Guild;
   const rndColor = randomColor;
   const image =
     messageObject.attachments.size > 0
-      ? messageObject.attachments.first().url
+      ? messageObject.attachments.first()?.url
       : "";
   const embed = new MessageEmbed()
-    .setAuthor(`${author.tag}`, author.avatarURL())
+    .setAuthor(`${author.tag}`, author.avatarURL() || author.defaultAvatarURL)
     .setDescription(message)
     .setColor(`#${rndColor()}`)
     .setTitle(`||\`${author.id}\`||`)
 
-    .setFooter(`${guild.name} • ID: ${guild.id}`, guild.iconURL());
+    .setFooter(`${guild.name} • ID: ${guild.id}`, guild.iconURL() || "");
 
   const url = extractUrlFromMessage(message);
 
-  if (
-    (image && image.endsWith(".jpg")) ||
-    image.endsWith(".png") ||
-    image.endsWith(".gif") ||
-    image.endsWith(".jpeg")
-  ) {
-    embed.setImage(image);
-  } else if (url) {
-    // embed.setThumbnail(url[0]);
-    // embed.setImage(url[0]);
-    //set description message without url[0]
-    embed.setDescription(message.replace(url[0], ""));
+  if (image) {
+    if (
+      image.endsWith(".jpg") ||
+      image.endsWith(".png") ||
+      image.endsWith(".gif") ||
+      image.endsWith(".jpeg")
+    ) {
+      embed.setImage(image);
+    } else if (url) {
+      // embed.setThumbnail(url[0]);
+      // embed.setImage(url[0]);
+      //set description message without url[0]
+      embed.setDescription(message.replace(url[0], ""));
+    }
   }
 
   return embed;
