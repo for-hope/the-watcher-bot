@@ -1,11 +1,21 @@
 import { Client, CommandInteraction, TextChannel } from "discord.js";
-import mongoose, { model } from "mongoose";
+import mongoose, { model, Document } from "mongoose";
 import { IDimension } from "./dimensionClient";
 import { CONNECTION_REQUEST_STATUS } from "../utils/bot_embeds";
 
 export const PORTAL_MODEL = "Portal";
 
-interface IPortal extends Omit<IDimension, "servers"> {
+export interface IPortalServer {
+  server_id: string;
+  channel_id: string;
+  server_status: string;
+  requestMessage: {
+    id: string;
+    channel_id: string;
+  };
+}
+export interface IPortal {
+  name: { type: String; required: true };
   creatorId: string;
   originServerId: string;
   originChannelId: string;
@@ -22,7 +32,6 @@ interface IPortal extends Omit<IDimension, "servers"> {
     }
   ];
 }
-
 export enum PortalRequest {
   approved = "Approved",
   denied = "Denied",
@@ -33,7 +42,11 @@ export enum PortalRequest {
   unkown = "Unknown",
 }
 
-const portalSchema = new mongoose.Schema<IPortal>({
+export interface IPortalDocument extends IPortal, Document {
+  updateServerStatus: (serverStatus: PortalRequest) => Promise<IPortalDocument>;
+}
+
+const portalSchema = new mongoose.Schema<IPortalDocument>({
   name: { type: String, required: true, unique: false },
   servers: [
     {
@@ -57,9 +70,21 @@ const portalSchema = new mongoose.Schema<IPortal>({
   openInvitation: { type: Boolean, default: true }, //other servers can invite other servers to this portal
 });
 
-const Portal = model<IPortal>(PORTAL_MODEL, portalSchema);
+portalSchema.methods.updateServerStatus = async function (
+  serverStatus: PortalRequest
+) {
+  const portal = this;
+  portal.servers.forEach((server) => {
+    server.server_status = serverStatus;
+  });
+  return portal.save();
+};
 
-export const channelPortal = async (channelId: string): Promise<string> => {
+const Portal = model<IPortalDocument>(PORTAL_MODEL, portalSchema);
+
+export const getOriginChannelId = async (
+  channelId: string
+): Promise<string> => {
   const portal = await Portal.findOne({
     "servers.channel_id": channelId,
   });
@@ -71,7 +96,7 @@ export const channelPortal = async (channelId: string): Promise<string> => {
   return portal.originChannelId;
 };
 
-export const portalChannels = async (
+export const getChannelIdsOnPortal = async (
   originChannelId: string
 ): Promise<Array<string>> => {
   //get all server channels with portal name
@@ -204,7 +229,7 @@ export const createServerOnPortal = async (
 
 export const portalsByServerId = async (
   serverId: string
-): Promise<Array<IPortal> | null> => {
+): Promise<Array<IPortalDocument> | null> => {
   try {
     const portals = await Portal.find({
       "servers.server_id": serverId,
@@ -218,7 +243,7 @@ export const portalsByServerId = async (
 
 export const portalByServersChannelId = async (
   channelId: string
-): Promise<IPortal | null> => {
+): Promise<IPortalDocument | null> => {
   try {
     const portal = await Portal.findOne({
       "servers.channel_id": channelId,
@@ -227,5 +252,23 @@ export const portalByServersChannelId = async (
   } catch (err) {
     console.log("Error fetching portal : " + err);
     return null;
+  }
+};
+
+export const getServerIdsOnPortal = async (
+  channelId: string
+): Promise<Array<string>> => {
+  try {
+    //find portal where channel id is the servers.channelid
+    const portal = await Portal.findOne({
+      "servers.channel_id": channelId,
+    });
+    if (!portal) {
+      return [];
+    }
+    return portal.servers.map((server) => server.server_id);
+  } catch (err) {
+    console.log("Error fetching servers : " + err);
+    return [];
   }
 };

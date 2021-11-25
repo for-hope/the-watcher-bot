@@ -1,7 +1,7 @@
 import { Client, Message, MessageEmbed, TextChannel, Guild } from "discord.js";
 import { randomColor } from "../utils/decoration";
 import { channelDimension, dimensionChannels } from "../db/dimensionClient";
-import { channelPortal, portalChannels } from "../db/portalClient";
+import { getOriginChannelId, getChannelIdsOnPortal } from "../db/portalClient";
 
 module.exports = {
   name: "messageCreate",
@@ -20,9 +20,9 @@ module.exports = {
       }
     });
 
-    channelPortal(message.channel.id).then(async (originChannelId: string) => {
+    getOriginChannelId(message.channel.id).then(async (originChannelId: string) => {
       if (originChannelId) {
-        const ids = await portalChannels(originChannelId);
+        const ids = await getChannelIdsOnPortal(originChannelId);
         forwardMessageIfIncluded(ids, message, client);
       }
     });

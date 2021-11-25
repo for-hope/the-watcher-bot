@@ -6,6 +6,7 @@ import {
   createServerOnPortal,
   PortalRequest,
   addOrUpdateServerOnPortal,
+  getServerIdsOnPortal,
 } from "../db/portalClient";
 import { hasManagerPermission } from "../utils/permissions";
 import { CONNECTION_REQUEST_SENT } from "../utils/bot_embeds";
@@ -46,13 +47,19 @@ const channelToSend = async (
   }
 
   //send message to server in a channel called border-control
-  const trafficChannel = await getTrafficChannel(server);
-  if (!trafficChannel) {
+  try {
+    const trafficChannel = await getTrafficChannel(server);
+    if (!trafficChannel) {
+      throw new Error(
+        "I can't find a traffic channel in the server! Please let them know to `/setup` the bot correctly."
+      );
+    }
+    return trafficChannel;
+  } catch (e) {
     throw new Error(
       "I can't find a traffic channel in the server! Please let them know to `/setup` the bot correctly."
     );
   }
-  return trafficChannel;
 };
 
 const messageActionRow = () => {
@@ -68,14 +75,14 @@ const messageActionRow = () => {
   );
 };
 
-const embedMessage = (
+const embedMessage = async (
   interaction: CommandInteraction | ButtonInteraction,
   channel: GuildTextBasedChannel
 ) => {
   const author = interaction.member.user as User;
   const guild = interaction.guild as Guild;
   const clientUser = interaction.client.user as ClientUser;
-  return new MessageEmbed()
+  const embed = new MessageEmbed()
     .setColor("#0099ff")
     .setTitle(`${author.tag} \`${author.id}\``)
     .setDescription(
@@ -84,11 +91,29 @@ const embedMessage = (
     )
     .setAuthor(guild.name, guild.iconURL() as string | undefined)
     .setTimestamp()
-    .setFields({
-      name: "Servers",
-      value: `${guild.name} \`${guild.id}\``,
-    })
     .setFooter(clientUser.tag, clientUser.avatarURL() as string | undefined);
+  //get servers in portal
+  const guildIds = await getServerIdsOnPortal(channel.id);
+  const servers = guildIds.map((id) => getGuild(interaction.client, id));
+
+  servers.push(guild);
+
+  const uniqueServers = servers.filter(
+    (server, index, self) => index === self.findIndex((t) => t.id === server.id)
+  );
+
+  const serverNames = uniqueServers.map((server) => server.name);
+
+  const serverIds = uniqueServers.map((server) => server.id);
+  const fieldNames = serverNames.map(
+    (name, index) => `${name} \`${serverIds[index]}\``
+  );
+  embed.addFields({
+    name: "Servers",
+    value: fieldNames.join("\n"),
+  });
+
+  return embed;
 };
 
 module.exports = {
@@ -126,15 +151,11 @@ module.exports = {
 
     try {
       invitedGuild = getGuild(interaction.client, serverId);
+      await sendPortalRequest(interaction, serverId, channelToOpenPortalOn);
     } catch (e: any) {
       interaction.reply(e.message);
       return;
     }
-
-    // Add server and other info into the database
-
-    // Send the portal request
-    await sendPortalRequest(interaction, serverId, channelToOpenPortalOn);
 
     const trafficChannel = await getTrafficChannel(interaction.guild as Guild);
     let connectionRequestMessageId = "";
@@ -185,7 +206,7 @@ const sendPortalRequest = async (
   //setup connection request message action row "Approve" / "Deny"
   const row = messageActionRow();
   //setup embed
-  const embed = embedMessage(interaction, channel);
+  const embed = await embedMessage(interaction, channel);
 
   const adminRoles = await getAdminRoles(borderChannel.guildId);
   console.log(adminRoles);
@@ -194,6 +215,7 @@ const sendPortalRequest = async (
     : "";
 
   //send a request to the border-control channel
+
   const message = await borderChannel.send({
     content: `${adminRolePings} :bell: You got a new message!`,
     embeds: [embed],

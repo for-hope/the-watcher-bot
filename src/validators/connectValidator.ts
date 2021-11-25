@@ -1,6 +1,8 @@
-import { CommandInteraction, GuildTextBasedChannel } from "discord.js";
+import { CommandInteraction, Guild, GuildTextBasedChannel } from "discord.js";
 import { portalByServersChannelId, PortalRequest } from "../db/portalClient";
 import { hasManagerPermission } from "../utils/permissions";
+import { getGuild } from "../utils/bot_utils";
+import { getTrafficChannel } from "../db/serversClient";
 //create class connect validator with constructor interaction
 export class ConnectValidator {
   private interaction: CommandInteraction;
@@ -25,6 +27,8 @@ export class ConnectValidator {
         invitedGuildId
       ))
     )
+      return false;
+    if (!(await this.validateOwnTrafficChannel(channelToOpenPortalOn.id)))
       return false;
 
     //
@@ -87,6 +91,26 @@ export class ConnectValidator {
         }
       }
     }
+    return true;
+  }
+
+  private async validateOwnTrafficChannel(channelId: string): Promise<boolean> {
+    const guild = this.interaction.guild as Guild;
+    try {
+      const trafficChannel = await getTrafficChannel(guild);
+      if (trafficChannel.id === channelId) {
+        this.interaction.reply(
+          "You cannot connect to your own traffic channel."
+        );
+        return false;
+      }
+    } catch (e: any) {
+      this.interaction.reply(
+        "Your server isn't setup correctly to send and recieve portal connection requests. You must have a valid `traffic` channel. to setup the server use the slash command `/setup`"
+      );
+      return false;
+    }
+
     return true;
   }
 }

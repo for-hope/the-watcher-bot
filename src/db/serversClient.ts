@@ -72,7 +72,7 @@ export const getTrafficChannel = async (
   }
   const trafficChannel = serverModel.trafficChannel(server);
   if (!trafficChannel) {
-    throw new Error("Traffic channel not found");
+    throw new Error("Traffic channel not found for server " + server);
   }
   return trafficChannel;
 };
