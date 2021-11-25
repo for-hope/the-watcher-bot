@@ -47,3 +47,4 @@ export const CONNECTION_REQUEST_SENT = (
       clientUser.avatarURL() || clientUser.defaultAvatarURL
     );
 };
+

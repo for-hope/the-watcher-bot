@@ -1,5 +1,6 @@
 import { Guild, NSFWLevel, GuildTextBasedChannel } from "discord.js";
 import mongoose, { model, Document } from "mongoose";
+import { getTextChannel } from "../utils/bot_utils";
 
 export const SERVER_MODEL = "Server";
 
@@ -55,9 +56,7 @@ serverSchema.methods.trafficChannel = function (
   if (!this.trafficChannelId) {
     return;
   }
-  const trafficChannel = server.channels.cache.find(
-    (c) => c.id === this.trafficChannelId
-  );
+  const trafficChannel = getTextChannel(server.client, this.trafficChannelId);
   return trafficChannel as GuildTextBasedChannel;
 };
 
@@ -129,4 +128,14 @@ export const getAdminRoles = async (serverId: string) => {
     return;
   }
   return server.adminRoles;
+};
+
+export const getServerById = async (serverId: string) => {
+  try {
+    const server = await Server.findOne({ serverId });
+    return server;
+  } catch (error) {
+    console.error(error);
+    throw new Error("Server not found");
+  }
 };

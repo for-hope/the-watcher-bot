@@ -1,4 +1,12 @@
-import { Guild, CategoryChannel, TextChannel, Role, Client } from "discord.js";
+import {
+  Guild,
+  CategoryChannel,
+  TextChannel,
+  Role,
+  Client,
+  GuildChannel,
+  User,
+} from "discord.js";
 
 //CONSTANTS
 
@@ -46,4 +54,21 @@ export const getGuild = (client: Client, guildId: string): Guild => {
     );
   }
   return guild;
+};
+
+export const getTextChannel = (
+  client: Client,
+  channelId: string
+): TextChannel | null => {
+  const channel = client.channels.cache.find(
+    (channel) => channel.id === channelId
+  ) as TextChannel;
+  return channel;
+};
+
+export const deletedChannelAuthor = async (channel: TextChannel) => {
+  const logs = await channel.guild.fetchAuditLogs({ type: "CHANNEL_DELETE" });
+  return logs.entries.find(
+    (entry) => (entry.target as GuildChannel).id === channel.id
+  )?.executor as User | undefined;
 };
