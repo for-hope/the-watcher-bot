@@ -16,27 +16,12 @@ import { hasManagerPermission } from "../utils/permissions";
 import { CONNECTION_REQUEST_SENT } from "../utils/bot_embeds";
 import { PORTAL_REQUEST_SENT } from "../utils/bot_messages";
 
-import {
-  ButtonInteraction,
-  CommandInteraction,
-  GuildTextBasedChannel,
-  MessageActionRow,
-  MessageButton,
-  MessageEmbed,
-  ClientUser,
-  Guild,
-  User,
-} from "discord.js";
+import { CommandInteraction, GuildTextBasedChannel, Guild } from "discord.js";
 import { ChannelType } from "discord-api-types/payloads/v9";
 import { getGuild } from "../utils/bot_utils";
 import { ConnectValidator } from "../validators/connectValidator";
 import { portalRequestEmbed } from "../views/embeds/portalRequestEmbed";
 import { portalRequestAction } from "../views/actions/portalRequestActions";
-
-export enum PortalResponses {
-  approve = "PortalApprove",
-  deny = "PortalDeny",
-}
 
 const CONNECT_COMMAND = "/connect";
 
@@ -80,10 +65,14 @@ module.exports = {
       return;
     }
 
+    //args
+    //
     const channelToOpenPortalOn = interaction.options.getChannel(
       "channel"
     ) as GuildTextBasedChannel;
     const serverId = interaction.options.getString("server_id") as string;
+    //
+    //
 
     let invitedGuild: Guild;
 
@@ -92,6 +81,7 @@ module.exports = {
       const server = await getServerById(serverId);
       await server?.invite(interaction, channelToOpenPortalOn);
     } catch (e: any) {
+      console.error(e);
       interaction.reply(e.message);
       return;
     }
@@ -132,40 +122,4 @@ module.exports = {
     );
     await interaction.reply(PORTAL_REQUEST_SENT(invitedGuild, trafficChannel));
   },
-};
-
-const sendPortalRequest = async (
-  interaction: CommandInteraction,
-  serverId: string,
-  channel: GuildTextBasedChannel
-): Promise<void> => {
-  //Get the other server's border channel.
-  const borderChannel = await invitedGuildTrafficChannel(interaction, serverId);
-  if (!borderChannel) {
-    return;
-  }
-
-  //setup connection request message action row "Approve" / "Deny"
-  const row = portalRequestAction();
-  //setup embed
-  const embed = await portalRequestEmbed(interaction, channel);
-
-  const adminRoles = await getAdminRoles(borderChannel.guildId);
-  const adminRolePings = adminRoles
-    ? adminRoles.map((role) => `<@&${role}>`)
-    : "";
-
-  //send a request to the border-control channel
-
-  const message = await borderChannel.send({
-    content: `${adminRolePings} :bell: You got a new message!`,
-    embeds: [embed],
-    components: [row],
-  });
-
-  const filter = (i: ButtonInteraction) =>
-    i.customId === PortalResponses.approve ||
-    i.customId === PortalResponses.deny;
-
-  portalRequestCollector(filter, message, channel);
 };

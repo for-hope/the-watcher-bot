@@ -8,7 +8,7 @@ import {
   Message,
   MessageComponentInteraction,
 } from "discord.js";
-import { PortalResponses } from "../commands/connect";
+
 import { addOrUpdateServerOnPortal, PortalRequest } from "../db/portalClient";
 import { hasManagerPermission } from "../utils/permissions";
 
@@ -16,6 +16,7 @@ import {
   getOrCreateBotCategory,
   PORTALS_CATEGORY_NAME,
 } from "../utils/bot_utils";
+import { PortalResponses } from "../types/portal";
 
 export const portalRequestCollector = (
   filter: any,

@@ -41,8 +41,7 @@ for (const file of eventFiles) {
   }
 }
 
-const commands: Collection<string, (event: runEvent) => any> =
-  new Collection();
+const commands: Collection<string, (event: runEvent) => any> = new Collection();
 
 client.commands = commands;
 

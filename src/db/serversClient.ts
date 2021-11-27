@@ -27,9 +27,7 @@ interface IServer {
   nsfwLevel: NSFWLevel;
   isSetup: boolean;
 }
-
 interface IServerDocument extends IServer, Document {
-  trafficChannel: (server: any) => GuildTextBasedChannel | undefined;
   invite: (
     interaction: CommandInteraction,
 
@@ -62,12 +60,10 @@ const serverSchema = new mongoose.Schema<IServerDocument>({
   isSetup: { type: Boolean, required: true, unique: false, default: false },
 });
 
-const Server = model<IServerDocument>(SERVER_MODEL, serverSchema);
-
 serverSchema.methods.invite = async function (
   interaction: CommandInteraction,
   channel: GuildTextBasedChannel
-) {
+): Promise<void> {
   const trafficChannelId = this.trafficChannelId;
   if (!trafficChannelId) {
     throw new Error(
@@ -89,27 +85,21 @@ serverSchema.methods.invite = async function (
   await trafficChannel.send(messageContent);
 };
 
-serverSchema.methods.trafficChannel = function (
-  this: IServerDocument,
-  server: Guild
-): GuildTextBasedChannel | undefined {
-  if (!this.trafficChannelId) {
-    return;
-  }
-  const trafficChannel = getTextChannel(server.client, this.trafficChannelId);
-  return trafficChannel as GuildTextBasedChannel;
-};
-
+export const Server = model<IServerDocument>(SERVER_MODEL, serverSchema);
 export const getTrafficChannel = async (
   server: Guild
 ): Promise<GuildTextBasedChannel> => {
   const serverModel = await Server.findOne({ serverId: server.id });
-  if (!serverModel) {
+  if (!serverModel || !serverModel.trafficChannelId) {
     throw new Error(
       "I can't find a traffic channel in the server! Please let them know to `/setup` the bot correctly."
     );
   }
-  const trafficChannel = serverModel.trafficChannel(server);
+
+  const trafficChannel = getTextChannel(
+    server.client,
+    serverModel.trafficChannelId
+  );
   if (!trafficChannel) {
     throw new Error(
       "I can't find a traffic channel in the server! Please let them know to `/setup` the bot correctly."
@@ -172,11 +162,15 @@ export const getAdminRoles = async (serverId: string) => {
   return server.adminRoles;
 };
 
-export const getServerById = async (serverId: string) => {
+export const getServerById = async (
+  serverId: string
+): Promise<IServerDocument> => {
   try {
     const server = await Server.findOne({ serverId });
-    return server;
+
+    return server as IServerDocument;
   } catch (error) {
+    console.error(error);
     throw new Error("Server not found");
   }
 };

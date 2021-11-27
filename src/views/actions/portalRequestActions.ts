@@ -1,5 +1,5 @@
 import { MessageActionRow, MessageButton } from "discord.js";
-import { PortalResponses } from "../../commands/connect";
+import { PortalResponses } from "../../types/portal";
 
 export const portalRequestAction = () => {
   return new MessageActionRow().addComponents(

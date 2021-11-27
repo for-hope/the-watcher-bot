@@ -105,6 +105,7 @@ export class ConnectValidator {
         return false;
       }
     } catch (e: any) {
+      console.error(e);
       this.interaction.reply(
         "Your server isn't setup correctly to send and recieve portal connection requests. You must have a valid `traffic` channel. to setup the server use the slash command `/setup`"
       );
