@@ -50,7 +50,7 @@ export const getGuild = (client: Client, guildId: string): Guild => {
   const guild = client.guilds.cache.find((guild) => guild.id === guildId);
   if (!guild) {
     throw new Error(
-      "Cannot connect to that server! Make sure I'm a member and setup correctly in that server."
+      GUILD_NOT_FOUND
     );
   }
   return guild;

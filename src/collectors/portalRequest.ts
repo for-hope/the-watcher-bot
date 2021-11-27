@@ -17,17 +17,20 @@ import {
   PORTALS_CATEGORY_NAME,
 } from "../utils/bot_utils";
 import { PortalResponses } from "../types/portal";
-
+//TODO setup collectors correctly
 export const portalRequestCollector = (
-  filter: any,
   message: Message,
   channel: GuildTextBasedChannel
 ) => {
+  const filter:any = (i: ButtonInteraction) =>
+    i.customId === PortalResponses.approve ||
+    i.customId === PortalResponses.deny;
   const collector = message.createMessageComponentCollector({
     filter,
   });
 
   collector.on("collect", async (i: ButtonInteraction) => {
+    console.log(i.customId);
     const hasPerms = await hasManagerPermission(i);
     if (!hasPerms) {
       return;

@@ -25,20 +25,6 @@ import { portalRequestAction } from "../views/actions/portalRequestActions";
 
 const CONNECT_COMMAND = "/connect";
 
-const invitedGuildTrafficChannel = async (
-  interaction: CommandInteraction,
-  serverId: string
-): Promise<GuildTextBasedChannel> => {
-  let server: Guild;
-  try {
-    server = getGuild(interaction.client, serverId);
-    const trafficChannel = await getTrafficChannel(server);
-    return trafficChannel;
-  } catch (e: any) {
-    throw new Error(e.message);
-  }
-};
-
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("connect")
@@ -78,6 +64,7 @@ module.exports = {
 
     try {
       invitedGuild = getGuild(interaction.client, serverId);
+
       const server = await getServerById(serverId);
       await server?.invite(interaction, channelToOpenPortalOn);
     } catch (e: any) {
@@ -85,16 +72,10 @@ module.exports = {
       interaction.reply(e.message);
       return;
     }
-
-    let trafficChannel: GuildTextBasedChannel;
-    let connectionRequestMessageId = "";
-    try {
-      trafficChannel = await getTrafficChannel(interaction.guild as Guild);
-    } catch (e: any) {
-      interaction.reply(SELF_NO_TRAFFIC_CHANNEL);
-      return;
-    }
-
+    
+    const trafficChannel: GuildTextBasedChannel = await getTrafficChannel(
+      interaction.guild as Guild
+    );
     const connectionRequestStatusMessage = await trafficChannel.send({
       embeds: [
         CONNECTION_REQUEST_SENT(
@@ -104,7 +85,6 @@ module.exports = {
         ),
       ],
     });
-    connectionRequestMessageId = connectionRequestStatusMessage.id;
 
     await createServerOnPortal(
       channelToOpenPortalOn.name,
@@ -116,10 +96,11 @@ module.exports = {
       "",
       serverId,
       PortalRequest.pending,
-      connectionRequestMessageId,
+      connectionRequestStatusMessage.id,
       trafficChannel.id,
       interaction.client
     );
+
     await interaction.reply(PORTAL_REQUEST_SENT(invitedGuild, trafficChannel));
   },
 };

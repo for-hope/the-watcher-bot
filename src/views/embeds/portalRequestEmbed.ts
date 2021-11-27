@@ -17,6 +17,7 @@ export const portalRequestEmbed = async (
   const author = interaction.member.user as User;
   const guild = interaction.guild as Guild;
   const clientUser = interaction.client.user as ClientUser;
+
   const embed = new MessageEmbed()
     .setColor("#0099ff")
     .setTitle(`${author.tag} \`${author.id}\``)
@@ -27,8 +28,9 @@ export const portalRequestEmbed = async (
     .setAuthor(guild.name, guild.iconURL() as string | undefined)
     .setTimestamp()
     .setFooter(clientUser.tag, clientUser.avatarURL() as string | undefined);
+
   //get servers in portal
-  const guildIds = await getServerIdsOnPortal(channel.id);
+  const guildIds = await getServerIdsOnPortal(channel.id); //TODO change with servers with approved
   const servers = guildIds.map((id) => getGuild(interaction.client, id));
 
   servers.push(guild);

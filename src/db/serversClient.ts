@@ -3,12 +3,16 @@ import {
   NSFWLevel,
   GuildTextBasedChannel,
   CommandInteraction,
+  Message,
+  ButtonInteraction,
 } from "discord.js";
 import mongoose, { model, Document } from "mongoose";
 import { getTextChannel } from "../utils/bot_utils";
 import { portalRequestEmbed } from "../views/embeds/portalRequestEmbed";
 import { portalRequestAction } from "../views/actions/portalRequestActions";
 import { PortalViews } from "../views/portalViews";
+import { portalRequestCollector } from "../collectors/portalRequest";
+import { PortalResponses } from "../types/portal";
 
 export const SERVER_MODEL = "Server";
 
@@ -31,7 +35,8 @@ interface IServerDocument extends IServer, Document {
   invite: (
     interaction: CommandInteraction,
 
-    channel: GuildTextBasedChannel
+    channel: GuildTextBasedChannel,
+ 
   ) => Promise<void>;
 }
 
@@ -62,19 +67,16 @@ const serverSchema = new mongoose.Schema<IServerDocument>({
 
 serverSchema.methods.invite = async function (
   interaction: CommandInteraction,
-  channel: GuildTextBasedChannel
+  channel: GuildTextBasedChannel,
+
 ): Promise<void> {
   const trafficChannelId = this.trafficChannelId;
   if (!trafficChannelId) {
-    throw new Error(
-      "The other servers needs to set a traffic channel first. Let them know to use `!setup` to do that."
-    );
+    throw new Error(OTHER_NO_TRAFFIC_CHANNEL);
   }
   const trafficChannel = getTextChannel(interaction.client, trafficChannelId);
   if (!trafficChannel) {
-    throw new Error(
-      "The other servers needs to set a traffic channel first. Let them know to use `!setup` to do that."
-    );
+    throw new Error(OTHER_NO_TRAFFIC_CHANNEL);
   }
   const messageContent = await PortalViews.request(
     interaction,
@@ -82,7 +84,8 @@ serverSchema.methods.invite = async function (
     this.serverId
   );
 
-  await trafficChannel.send(messageContent);
+  const requestMessage = await trafficChannel.send(messageContent);
+  portalRequestCollector(requestMessage, channel);
 };
 
 export const Server = model<IServerDocument>(SERVER_MODEL, serverSchema);

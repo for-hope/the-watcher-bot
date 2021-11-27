@@ -42,7 +42,10 @@ export enum PortalRequest {
 }
 
 export interface IPortalDocument extends IPortal, Document {
-  updateServerStatus: (serverStatus: PortalRequest) => Promise<IPortalDocument>;
+  updateServerStatus: (
+    serverId: string,
+    serverStatus: PortalRequest
+  ) => Promise<IPortalDocument>;
 }
 
 const portalSchema = new mongoose.Schema<IPortalDocument>({
@@ -70,11 +73,17 @@ const portalSchema = new mongoose.Schema<IPortalDocument>({
 });
 
 portalSchema.methods.updateServerStatus = async function (
+  serverId: string,
   serverStatus: PortalRequest
 ) {
   const portal = this;
   portal.servers.forEach((server) => {
     server.server_status = serverStatus;
+  });
+  portal.servers.forEach((server) => {
+    if (server.server_id === serverId) {
+      server.server_status = serverStatus;
+    }
   });
   return portal.save();
 };

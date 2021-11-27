@@ -34,6 +34,6 @@ module.exports = {
       } ]`
     );
 
-    await portal.updateServerStatus(PortalRequest.left);
+    await portal.updateServerStatus(channel.guildId, PortalRequest.left);
   },
 };
