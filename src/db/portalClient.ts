@@ -199,7 +199,7 @@ export const createServerOnPortal = async (
   portalName: string,
   interaction: CommandInteraction,
   channelId: string
-): Promise<boolean> => {
+): Promise<IPortalDocument | null> => {
   try {
     const authorId = interaction.user.id;
     const serverId = interaction.guildId;
@@ -207,7 +207,7 @@ export const createServerOnPortal = async (
 
     if (portal) {
       console.log("Channel Already exists on other portal.");
-      return false;
+      return portal;
     }
 
     console.log("No portal found, creating one...");
@@ -228,10 +228,10 @@ export const createServerOnPortal = async (
 
     await portal.save();
     console.log("Portal added.");
-    return true;
+    return portal;
   } catch (err) {
     console.log(err);
-    return false;
+    return null;
   }
 };
 

@@ -16,7 +16,12 @@ import { hasManagerPermission } from "../utils/permissions";
 import { CONNECTION_REQUEST_SENT } from "../utils/bot_embeds";
 import { PORTAL_REQUEST_SENT } from "../utils/bot_messages";
 
-import { CommandInteraction, GuildTextBasedChannel, Guild } from "discord.js";
+import {
+  CommandInteraction,
+  GuildTextBasedChannel,
+  Guild,
+  TextChannel,
+} from "discord.js";
 import { ChannelType } from "discord-api-types/payloads/v9";
 import { getGuild } from "../utils/bot_utils";
 import { ConnectValidator } from "../validators/connectValidator";
@@ -45,62 +50,29 @@ module.exports = {
         .setRequired(true)
     ),
   async execute(interaction: CommandInteraction) {
-    const connectValidator = new ConnectValidator(interaction);
+    const connectCommand = new ConnectValidator(interaction);
 
-    if (!(await connectValidator.validate())) {
+    if (!(await connectCommand.validate())) {
       return;
     }
 
-    //args
-    //
-    const channelToOpenPortalOn = interaction.options.getChannel(
-      "channel"
-    ) as GuildTextBasedChannel;
-    const serverId = interaction.options.getString("server_id") as string;
-    //
-    //
+    const portal = await connectCommand.createOrGetPortal();
 
-    let invitedGuild: Guild;
-
-    try {
-      invitedGuild = getGuild(interaction.client, serverId);
-
-      const server = await getServerById(serverId);
-      await server?.invite(interaction, channelToOpenPortalOn);
-    } catch (e: any) {
-      console.error(e);
-      interaction.reply(e.message);
-      return;
-    }
-    
-    const trafficChannel: GuildTextBasedChannel = await getTrafficChannel(
-      interaction.guild as Guild
-    );
+    const trafficChannel = connectCommand.trafficChannel as TextChannel;
+    console.log(`Invited Guild : ${connectCommand.invitedGuild}`);
     const connectionRequestStatusMessage = await trafficChannel.send({
       embeds: [
         CONNECTION_REQUEST_SENT(
           interaction,
           PortalRequest.pending,
-          invitedGuild
+          connectCommand.invitedGuild as Guild
         ),
       ],
     });
+    await connectCommand.inviteServer(connectionRequestStatusMessage.id);
 
-    await createServerOnPortal(
-      channelToOpenPortalOn.name,
-      interaction,
-      channelToOpenPortalOn.id
+    await interaction.reply(
+      PORTAL_REQUEST_SENT(connectCommand.invitedGuild as Guild, trafficChannel)
     );
-    await addOrUpdateServerOnPortal(
-      channelToOpenPortalOn.id,
-      "",
-      serverId,
-      PortalRequest.pending,
-      connectionRequestStatusMessage.id,
-      trafficChannel.id,
-      interaction.client
-    );
-
-    await interaction.reply(PORTAL_REQUEST_SENT(invitedGuild, trafficChannel));
   },
 };

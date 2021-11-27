@@ -31,7 +31,7 @@ interface IServer {
   nsfwLevel: NSFWLevel;
   isSetup: boolean;
 }
-interface IServerDocument extends IServer, Document {
+export interface IServerDocument extends IServer, Document {
   invite: (
     interaction: CommandInteraction,
 
