@@ -1,18 +1,7 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
 
-import {
-  getTrafficChannel,
-  getAdminRoles,
-  getServerById,
-} from "../db/serversClient";
-import { portalRequestCollector } from "../collectors/portalRequest";
-import {
-  createServerOnPortal,
-  PortalRequest,
-  addOrUpdateServerOnPortal,
-  getServerIdsOnPortal,
-} from "../db/portalClient";
-import { hasManagerPermission } from "../utils/permissions";
+import { PortalRequest } from "../db/portalClient";
+
 import { CONNECTION_REQUEST_SENT } from "../utils/bot_embeds";
 import { PORTAL_REQUEST_SENT } from "../utils/bot_messages";
 
@@ -49,7 +38,7 @@ module.exports = {
       return;
     }
 
-    const portal = await connectCommand.createOrGetPortal();
+    await connectCommand.createOrGetPortal();
 
     const trafficChannel = connectCommand.trafficChannel as TextChannel;
 
