@@ -22,6 +22,7 @@ export const portalRequestCollector = (
   message: Message,
   channel: GuildTextBasedChannel
 ) => {
+
   const filter: any = (i: ButtonInteraction) =>
     i.customId === PortalResponses.approve ||
     i.customId === PortalResponses.deny;

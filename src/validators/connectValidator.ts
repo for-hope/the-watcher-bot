@@ -5,7 +5,7 @@ import {
   TextChannel,
 } from "discord.js";
 import {
-  addOrUpdateServerOnPortal,
+
   createServerOnPortal,
   IPortalDocument,
   portalByServersChannelId,

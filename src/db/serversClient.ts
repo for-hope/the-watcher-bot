@@ -22,10 +22,13 @@ interface IServer {
   trafficChannelId?: string;
   everythingChannelId?: string;
   memberCount: number;
-  requestMessages?: {
-    id: string;
-    originChannelId: string;
-  }[];
+  requestMessages?: [
+    {
+      requestMessageId: string;
+      originChannelId: string;
+      requestMessageChannelId: string;
+    }
+  ];
   adminRoles?: string[];
   banList?: string[];
   whiteList?: string[];
@@ -45,7 +48,13 @@ export interface IServerDocument extends IServer, Document {
 }
 
 export interface IServerModel extends Model<IServerDocument> {
-  allRequestIds: () => Promise<{ id: string; originChannelId: string }[]>;
+  allRequestIds: () => Promise<
+    {
+      requestMessageId: string;
+      originChannelId: string;
+      requestMessageChannelId: string;
+    }[]
+  >;
 }
 
 const serverSchema = new mongoose.Schema<IServerDocument>({
@@ -59,7 +68,12 @@ const serverSchema = new mongoose.Schema<IServerDocument>({
   memberCount: { type: Number, required: true, unique: false },
   requestMessages: [
     {
-      id: { type: String, required: false, unique: true },
+      requestMessageId: { type: String, required: false, unique: false },
+      requestMessageChannelId: {
+        type: String,
+        required: false,
+        unique: false,
+      },
       originChannelId: { type: String, required: false, unique: false },
     },
   ],
@@ -100,25 +114,31 @@ serverSchema.methods.invite = async function (
   const requestMessage = await trafficChannel.send(messageContent);
   this.requestMessages
     ? this.requestMessages.push({
-        id: requestMessage.id,
+        requestMessageId: requestMessage.id,
         originChannelId: channel.id,
+        requestMessageChannelId: trafficChannel.id,
       })
     : (this.requestMessages = [
-        { id: requestMessage.id, originChannelId: channel.id },
+        {
+          requestMessageId: requestMessage.id,
+          originChannelId: channel.id,
+          requestMessageChannelId: trafficChannel.id,
+        },
       ]);
+  await this.save();
   portalRequestCollector(requestMessage, channel);
 };
 
 serverSchema.statics.allRequestIds = async function () {
   const servers = await this.find({
     trafficChannelId: { $exists: true, $nin: ["", undefined] },
-    requestMessageIds: { $exists: true, $ne: [] },
+    requestMessages: { $exists: true, $ne: [] },
   });
 
   const requests = servers.map(
     (server: IServerDocument) => server.requestMessages
   );
-  return requests;
+  return requests.flat();
 };
 
 export const Server = model<IServerDocument, IServerModel>(
