@@ -1,5 +1,5 @@
 import { Client, CommandInteraction, TextChannel } from "discord.js";
-import mongoose, { model, Document } from "mongoose";
+import mongoose, { model, Document, Model } from "mongoose";
 import { CONNECTION_REQUEST_STATUS } from "../utils/bot_embeds";
 import { IServerDocument } from "./serversClient";
 
@@ -52,6 +52,10 @@ export interface IPortalDocument extends IPortal, Document {
     serverDoc: IServerDocument,
     id: string
   ) => Promise<IPortalDocument>;
+}
+
+export interface IPortalModel extends Model<IPortalDocument> {
+  requestMessages: () => Promise<Array<{ id: string; channelId: string }>>;
 }
 
 const portalSchema = new mongoose.Schema<IPortalDocument>({
@@ -123,7 +127,21 @@ portalSchema.methods.addServerRequest = async function (
   return portal.save();
 };
 
-const Portal = model<IPortalDocument>(PORTAL_MODEL, portalSchema);
+//TODO handle too many requests / limits
+portalSchema.statics.requestMessages = async function () {
+  const requestMessages: Array<{
+    id: string;
+    channelId: string;
+  }> = await this.find({
+    "servers.server_status": PortalRequest.pending,
+  })
+    .map((portal: IPortalDocument) => portal.servers)
+    .map((server: any) => server.requestMessage);
+
+  return requestMessages;
+};
+
+export const Portal = model<IPortalDocument, IPortalModel>(PORTAL_MODEL, portalSchema);
 
 export const getOriginChannelId = async (
   channelId: string

@@ -6,7 +6,7 @@ import {
   Message,
   ButtonInteraction,
 } from "discord.js";
-import mongoose, { model, Document } from "mongoose";
+import mongoose, { model, Document, Model } from "mongoose";
 import { getTextChannel } from "../utils/bot_utils";
 import { portalRequestEmbed } from "../views/embeds/portalRequestEmbed";
 import { portalRequestAction } from "../views/actions/portalRequestActions";
@@ -22,6 +22,10 @@ interface IServer {
   trafficChannelId?: string;
   everythingChannelId?: string;
   memberCount: number;
+  requestMessages?: {
+    id: string;
+    originChannelId: string;
+  }[];
   adminRoles?: string[];
   banList?: string[];
   whiteList?: string[];
@@ -40,6 +44,10 @@ export interface IServerDocument extends IServer, Document {
   ) => Promise<void>;
 }
 
+export interface IServerModel extends Model<IServerDocument> {
+  allRequestIds: () => Promise<{ id: string; originChannelId: string }[]>;
+}
+
 const serverSchema = new mongoose.Schema<IServerDocument>({
   serverId: { type: String, required: true, unique: true },
   trafficChannelId: {
@@ -49,6 +57,13 @@ const serverSchema = new mongoose.Schema<IServerDocument>({
     sparse: true,
   },
   memberCount: { type: Number, required: true, unique: false },
+  requestMessages: [
+    {
+      id: { type: String, required: false, unique: true },
+      originChannelId: { type: String, required: false, unique: false },
+    },
+  ],
+
   adminRoles: [{ type: String, required: false, unique: false }],
   banList: [{ type: String, required: false, unique: false }],
   whiteList: [{ type: String, required: false, unique: false }],
@@ -83,10 +98,33 @@ serverSchema.methods.invite = async function (
   );
 
   const requestMessage = await trafficChannel.send(messageContent);
+  this.requestMessages
+    ? this.requestMessages.push({
+        id: requestMessage.id,
+        originChannelId: channel.id,
+      })
+    : (this.requestMessages = [
+        { id: requestMessage.id, originChannelId: channel.id },
+      ]);
   portalRequestCollector(requestMessage, channel);
 };
 
-export const Server = model<IServerDocument>(SERVER_MODEL, serverSchema);
+serverSchema.statics.allRequestIds = async function () {
+  const servers = await this.find({
+    trafficChannelId: { $exists: true, $nin: ["", undefined] },
+    requestMessageIds: { $exists: true, $ne: [] },
+  });
+
+  const requests = servers.map(
+    (server: IServerDocument) => server.requestMessages
+  );
+  return requests;
+};
+
+export const Server = model<IServerDocument, IServerModel>(
+  SERVER_MODEL,
+  serverSchema
+);
 export const getTrafficChannel = async (
   server: Guild
 ): Promise<GuildTextBasedChannel> => {
