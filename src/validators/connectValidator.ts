@@ -161,11 +161,9 @@ export class ConnectValidator {
         this.interaction.client,
         this.invitedGuildId
       );
-      console.log("THIS IS MY GUILD " + this.invitedGuild.name);
+
       if (!this.invitedGuild) {
         throw new Error("No guild");
-      } else {
-        console.log("my guild" + this.invitedGuild);
       }
       return true;
     } catch (e) {
