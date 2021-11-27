@@ -13,6 +13,7 @@ import { portalRequestAction } from "../views/actions/portalRequestActions";
 import { PortalViews } from "../views/portalViews";
 import { portalRequestCollector } from "../collectors/portalRequest";
 import { PortalResponses } from "../types/portal";
+import { IPortalDocument } from "./portalClient";
 
 export const SERVER_MODEL = "Server";
 
@@ -35,8 +36,7 @@ export interface IServerDocument extends IServer, Document {
   invite: (
     interaction: CommandInteraction,
 
-    channel: GuildTextBasedChannel,
- 
+    channel: GuildTextBasedChannel
   ) => Promise<void>;
 }
 
@@ -67,16 +67,14 @@ const serverSchema = new mongoose.Schema<IServerDocument>({
 
 serverSchema.methods.invite = async function (
   interaction: CommandInteraction,
-  channel: GuildTextBasedChannel,
-
+  channel: GuildTextBasedChannel
 ): Promise<void> {
-  const trafficChannelId = this.trafficChannelId;
-  if (!trafficChannelId) {
-    throw new Error(OTHER_NO_TRAFFIC_CHANNEL);
-  }
+  const trafficChannelId = this.trafficChannelId || "";
+
   const trafficChannel = getTextChannel(interaction.client, trafficChannelId);
+
   if (!trafficChannel) {
-    throw new Error(OTHER_NO_TRAFFIC_CHANNEL);
+    return;
   }
   const messageContent = await PortalViews.request(
     interaction,

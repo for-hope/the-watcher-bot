@@ -60,9 +60,7 @@ export class ConnectValidator {
 
   private async validateManagerPermission(): Promise<boolean> {
     if (!(await hasManagerPermission(this.interaction))) {
-      this.interaction.reply(
-        "You do not have the required permissions to use this command."
-      );
+      this.interaction.reply(NO_COMMAND_PERMISSON);
     }
     return true;
   }
@@ -78,9 +76,7 @@ export class ConnectValidator {
         !openInvite &&
         portalChannel.originChannelId !== this.channelToOpenPortalOn.id
       ) {
-        this.interaction.reply(
-          "The original creator of this portal doesn't allow invitations to other servers."
-        );
+        this.interaction.reply(OPEN_INVITES_DISABLED);
         return false;
       }
       const portalServer = portalChannel.servers.find(
@@ -91,17 +87,13 @@ export class ConnectValidator {
 
         switch (serverState) {
           case PortalRequest.approved:
-            this.interaction.reply(
-              "This server is already connected to the portal."
-            );
+            this.interaction.reply(PORTAL_ALREADY_CONNECTED);
             return false;
           case PortalRequest.pending:
-            this.interaction.reply(
-              "This server is already pending approval on this portal channel. To cancel a request use `/cancel [server_id]`"
-            );
+            this.interaction.reply(PORTAL_PENDING_APPROVAL);
             return false;
           case PortalRequest.banned:
-            this.interaction.reply("This server is banned from the portal.");
+            this.interaction.reply(PORTAL_SERVER_BANNED);
             return false;
           default:
             return true;
@@ -118,21 +110,17 @@ export class ConnectValidator {
         const trafficChannel = getTextChannel(this.interaction.client, id);
         if (trafficChannel) {
           if (trafficChannel.id === this.channelToOpenPortalOn.id) {
-            this.interaction.reply(
-              "You cannot connect to your own traffic channel."
-            );
+            this.interaction.reply(PORTAL_CONNECT_TRAFFIC);
             return false;
           }
           this.trafficChannel = trafficChannel;
           return true;
         }
       }
-      throw new Error("No traffic channel");
+      throw new Error(SELF_NO_TRAFFIC_CHANNEL);
     } catch (e: any) {
       console.error(e);
-      this.interaction.reply(
-        "Your server isn't setup correctly to send and recieve portal connection requests. You must have a valid `traffic` channel. to setup the server use the slash command `/setup`"
-      );
+      this.interaction.reply(SELF_NO_TRAFFIC_CHANNEL);
       return false;
     }
   }
@@ -141,15 +129,11 @@ export class ConnectValidator {
     this.server = await getServerById(this.interaction.guildId);
     this.invitedServer = await getServerById(this.invitedGuildId);
     if (!this.server) {
-      this.interaction.reply(
-        "You are not setup to connect to other servers. To setup your server use the slash command `/setup`"
-      );
+      this.interaction.reply(SELF_SERVER_NOT_SETUP);
       return false;
     }
     if (!this.invitedServer) {
-      this.interaction.reply(
-        "The server you are trying to connect to is not setup correctly to connect to other servers. To setup a server use the slash command `/setup`"
-      );
+      this.interaction.reply(OTHER_SERVER_NOT_SETUP);
       return false;
     }
     return true;
@@ -167,9 +151,7 @@ export class ConnectValidator {
       }
       return true;
     } catch (e) {
-      this.interaction.reply(
-        "The server you are trying to connect to is not setup correctly to connect to other servers. To setup a server use the slash command `/setup`"
-      );
+      this.interaction.reply(OTHER_SERVER_NOT_SETUP);
       return false;
     }
   }
@@ -178,9 +160,7 @@ export class ConnectValidator {
     const trafficChannelId = (this.invitedServer as IServerDocument)
       .trafficChannelId;
     if (!trafficChannelId) {
-      this.interaction.reply(
-        "The server you are trying to connect to is not setup correctly to connect to other servers. To setup a server use the slash command `/setup`"
-      );
+      this.interaction.reply(OTHER_SERVER_NOT_SETUP);
       return false;
     }
     this.invitedGuildTrafficChannel = getTextChannel(
@@ -188,9 +168,7 @@ export class ConnectValidator {
       trafficChannelId
     );
     if (!this.invitedGuildTrafficChannel) {
-      this.interaction.reply(
-        "The server you are trying to connect to is not setup correctly to connect to other servers. To setup a server use the slash command `/setup`"
-      );
+      this.interaction.reply(OTHER_SERVER_NOT_SETUP);
       return false;
     }
     return true;
@@ -206,9 +184,7 @@ export class ConnectValidator {
       this.channelToOpenPortalOn.id
     );
     if (!portal) {
-      this.interaction.reply(
-        "There was an error creating the portal. Please try again later."
-      );
+      this.interaction.reply(PORTAL_CREATE_UNKNOWN_ERROR);
       return null;
     }
     return portal;
@@ -220,14 +196,9 @@ export class ConnectValidator {
       this.channelToOpenPortalOn
     );
 
-    await addOrUpdateServerOnPortal(
-      (this.portal as IPortalDocument).originChannelId,
-      "",
-      this.invitedGuildId,
-      PortalRequest.pending,
-      requestStatusMsgId,
-      (this.trafficChannel as TextChannel).id,
-      this.interaction.client
+    await this.portal?.addServerRequest(
+      this.invitedServer as IServerDocument,
+      requestStatusMsgId
     );
 
     return true;

@@ -16,17 +16,10 @@ import { hasManagerPermission } from "../utils/permissions";
 import { CONNECTION_REQUEST_SENT } from "../utils/bot_embeds";
 import { PORTAL_REQUEST_SENT } from "../utils/bot_messages";
 
-import {
-  CommandInteraction,
-  GuildTextBasedChannel,
-  Guild,
-  TextChannel,
-} from "discord.js";
+import { CommandInteraction, Guild, TextChannel } from "discord.js";
 import { ChannelType } from "discord-api-types/payloads/v9";
-import { getGuild } from "../utils/bot_utils";
+
 import { ConnectValidator } from "../validators/connectValidator";
-import { portalRequestEmbed } from "../views/embeds/portalRequestEmbed";
-import { portalRequestAction } from "../views/actions/portalRequestActions";
 
 const CONNECT_COMMAND = "/connect";
 
@@ -59,7 +52,7 @@ module.exports = {
     const portal = await connectCommand.createOrGetPortal();
 
     const trafficChannel = connectCommand.trafficChannel as TextChannel;
-    console.log(`Invited Guild : ${connectCommand.invitedGuild}`);
+
     const connectionRequestStatusMessage = await trafficChannel.send({
       embeds: [
         CONNECTION_REQUEST_SENT(

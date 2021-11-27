@@ -1,6 +1,7 @@
 import { Client, CommandInteraction, TextChannel } from "discord.js";
 import mongoose, { model, Document } from "mongoose";
 import { CONNECTION_REQUEST_STATUS } from "../utils/bot_embeds";
+import { IServerDocument } from "./serversClient";
 
 export const PORTAL_MODEL = "Portal";
 
@@ -46,6 +47,11 @@ export interface IPortalDocument extends IPortal, Document {
     serverId: string,
     serverStatus: PortalRequest
   ) => Promise<IPortalDocument>;
+
+  addServerRequest: (
+    serverDoc: IServerDocument,
+    id: string
+  ) => Promise<IPortalDocument>;
 }
 
 const portalSchema = new mongoose.Schema<IPortalDocument>({
@@ -85,6 +91,35 @@ portalSchema.methods.updateServerStatus = async function (
       server.server_status = serverStatus;
     }
   });
+  return portal.save();
+};
+
+portalSchema.methods.addServerRequest = async function (
+  serverDoc: IServerDocument,
+  id: string
+) {
+  const portal = this;
+
+  //remove server if it exists on portal
+  portal.servers.forEach((server) => {
+    if (
+      server.server_id === serverDoc.serverId &&
+      server.server_status !== PortalRequest.approved
+    ) {
+      portal.servers.splice(portal.servers.indexOf(server), 1);
+    }
+  });
+
+  portal.servers.push({
+    server_id: serverDoc.serverId,
+    channel_id: "",
+    server_status: PortalRequest.pending,
+    requestMessage: {
+      id,
+      channel_id: serverDoc.trafficChannelId as string,
+    },
+  });
+
   return portal.save();
 };
 
