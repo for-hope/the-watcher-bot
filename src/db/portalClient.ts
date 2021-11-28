@@ -1,6 +1,7 @@
 import { Client, CommandInteraction, TextChannel } from "discord.js";
-import mongoose, { model, Document } from "mongoose";
+import mongoose, { model, Document, Model } from "mongoose";
 import { CONNECTION_REQUEST_STATUS } from "../utils/bot_embeds";
+import { IServerDocument } from "./serversClient";
 
 export const PORTAL_MODEL = "Portal";
 
@@ -46,6 +47,27 @@ export interface IPortalDocument extends IPortal, Document {
     serverId: string,
     serverStatus: PortalRequest
   ) => Promise<IPortalDocument>;
+
+  addServerRequest: (
+    guildId: string,
+    requestId: string,
+    requestChannelId: string
+  ) => Promise<IPortalDocument>;
+
+  approveServerRequest: (
+    guildId: string,
+    channelId: string
+  ) => Promise<IPortalDocument>;
+
+  denyServerRequest: (serverId: string) => Promise<IPortalDocument>;
+
+  validChannelIds: () => Array<string>;
+
+  myServer: (serverId: string) => IPortalServer;
+}
+
+export interface IPortalModel extends Model<IPortalDocument> {
+  requestMessages: () => Promise<Array<{ id: string; channelId: string }>>;
 }
 
 const portalSchema = new mongoose.Schema<IPortalDocument>({
@@ -72,23 +94,117 @@ const portalSchema = new mongoose.Schema<IPortalDocument>({
   openInvitation: { type: Boolean, default: true }, //other servers can invite other servers to this portal
 });
 
+portalSchema.methods.myServer = function (serverId: string) {
+  return this.servers.find((server) => server.server_id === serverId);
+};
+
 portalSchema.methods.updateServerStatus = async function (
   serverId: string,
   serverStatus: PortalRequest
 ) {
   const portal = this;
-  portal.servers.forEach((server) => {
-    server.server_status = serverStatus;
-  });
+
   portal.servers.forEach((server) => {
     if (server.server_id === serverId) {
       server.server_status = serverStatus;
+      return;
     }
   });
   return portal.save();
 };
 
-const Portal = model<IPortalDocument>(PORTAL_MODEL, portalSchema);
+portalSchema.methods.addServerRequest = async function (
+  guildId: string,
+  requestId: string,
+  requestChannelId: string
+) {
+  const portal = this;
+
+  //remove server if it exists on portal
+  portal.servers.forEach((server) => {
+    if (
+      server.server_id === guildId &&
+      server.server_status !== PortalRequest.approved
+    ) {
+      portal.servers.splice(portal.servers.indexOf(server), 1);
+    }
+  });
+
+  portal.servers.push({
+    server_id: guildId,
+    channel_id: "",
+    server_status: PortalRequest.pending,
+    requestMessage: {
+      id: requestId,
+      channel_id: requestChannelId,
+    },
+  });
+
+  return portal.save();
+};
+
+portalSchema.methods.denyServerRequest = async function (serverId: string) {
+  const portal = this;
+  portal.servers.forEach((server) => {
+    if (
+      server.server_id === serverId &&
+      server.server_status === PortalRequest.pending
+    ) {
+      server.server_status = PortalRequest.denied;
+      return;
+    }
+  });
+  return portal.save();
+};
+
+portalSchema.methods.validChannelIds = function () {
+  const portal = this;
+
+  //remove server if it exists on portal
+
+  const approvedChannelIds = portal.servers
+    .filter((server) => server.server_status === PortalRequest.approved)
+    .map((server) => server.channel_id);
+
+  return approvedChannelIds.flat();
+};
+
+portalSchema.methods.approveServerRequest = async function (
+  guildId: string,
+  channelId: string
+) {
+  const portal = this;
+  portal.servers.forEach((server) => {
+    if (
+      server.server_id === guildId &&
+      server.server_status === PortalRequest.pending
+    ) {
+      server.server_status = PortalRequest.approved;
+      server.channel_id = channelId;
+      return;
+    }
+  });
+  return portal.save();
+};
+
+//TODO handle too many requests / limits
+portalSchema.statics.requestMessages = async function () {
+  const requestMessages: Array<{
+    id: string;
+    channelId: string;
+  }> = await this.find({
+    "servers.server_status": PortalRequest.pending,
+  })
+    .map((portal: IPortalDocument) => portal.servers)
+    .map((server: any) => server.requestMessage);
+
+  return requestMessages;
+};
+
+export const Portal = model<IPortalDocument, IPortalModel>(
+  PORTAL_MODEL,
+  portalSchema
+);
 
 export const getOriginChannelId = async (
   channelId: string
@@ -136,7 +252,6 @@ export const addOrUpdateServerOnPortal = async (
   try {
     let portal = await Portal.findOne({ originChannelId: originChannelId });
     if (!portal) {
-      console.log("Portal doesn't exist");
       return [];
     }
 
@@ -145,7 +260,6 @@ export const addOrUpdateServerOnPortal = async (
       (server) => server.server_id === serverId
     );
     if (!server) {
-      console.log("Server doesn't exist");
       portal.servers.push({
         server_id: serverId,
         channel_id: channelId,
@@ -156,13 +270,11 @@ export const addOrUpdateServerOnPortal = async (
         },
       });
     } else {
-      console.log("Server exists");
       server.server_status = serverStatus;
       if (!server.channel_id) {
         server.channel_id = channelId;
       }
       if (requestMessageId !== null && requestMessageChannelId !== null) {
-        console.log("Request message exists");
         server.requestMessage = {
           id: requestMessageId,
           channel_id: requestMessageChannelId,
@@ -174,20 +286,18 @@ export const addOrUpdateServerOnPortal = async (
     const reqMsgId: string =
       requestMessageId || server?.requestMessage.id || "";
     if (client) {
-      console.log("Request message exists");
       const channel = client.channels.cache.get(reqMsgChannelId) as TextChannel;
       const msg = await channel.messages.fetch(reqMsgId);
       if (msg) {
-        console.log("Message exists");
         //edit message
         const embed = msg.embeds[0];
         embed.fields[0].value = CONNECTION_REQUEST_STATUS(serverStatus);
         await msg.edit({ embeds: [embed] });
       }
     }
-    console.log("Saving portal");
+
     await portal.save();
-    console.log("Portal updated!");
+
     return portal.servers.map((server) => server.channel_id);
   } catch (err: any) {
     console.log("Can't update portal Err: " + err.toString());
@@ -199,18 +309,15 @@ export const createServerOnPortal = async (
   portalName: string,
   interaction: CommandInteraction,
   channelId: string
-): Promise<boolean> => {
+): Promise<IPortalDocument | null> => {
   try {
     const authorId = interaction.user.id;
     const serverId = interaction.guildId;
     let portal = await Portal.findOne({ "servers.channel_id": channelId });
 
     if (portal) {
-      console.log("Channel Already exists on other portal.");
-      return false;
+      return portal;
     }
-
-    console.log("No portal found, creating one...");
 
     portal = new Portal({
       name: portalName,
@@ -227,11 +334,11 @@ export const createServerOnPortal = async (
     });
 
     await portal.save();
-    console.log("Portal added.");
-    return true;
+
+    return portal;
   } catch (err) {
     console.log(err);
-    return false;
+    return null;
   }
 };
 

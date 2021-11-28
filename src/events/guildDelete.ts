@@ -22,7 +22,7 @@ module.exports = {
           const portalChannel = getTextChannel(guild.client, channelId);
           if (portalChannel) {
             portalChannel.send(
-              `**${guild.name}** \`${guild.id}\` has left the portal.`
+              `**${guild.name}** \`${guild.id}\` has left the portal. [reason : The Watcher Bot cannot access the server anymore.]`
             );
           }
         }

@@ -3,16 +3,12 @@ import {
   NSFWLevel,
   GuildTextBasedChannel,
   CommandInteraction,
-  Message,
-  ButtonInteraction,
 } from "discord.js";
-import mongoose, { model, Document } from "mongoose";
+import mongoose, { model, Document, Model } from "mongoose";
 import { getTextChannel } from "../utils/bot_utils";
-import { portalRequestEmbed } from "../views/embeds/portalRequestEmbed";
-import { portalRequestAction } from "../views/actions/portalRequestActions";
+
 import { PortalViews } from "../views/portalViews";
 import { portalRequestCollector } from "../collectors/portalRequest";
-import { PortalResponses } from "../types/portal";
 
 export const SERVER_MODEL = "Server";
 
@@ -21,6 +17,13 @@ interface IServer {
   trafficChannelId?: string;
   everythingChannelId?: string;
   memberCount: number;
+  requestMessages?: [
+    {
+      requestMessageId: string;
+      originChannelId: string;
+      requestMessageChannelId: string;
+    }
+  ];
   adminRoles?: string[];
   banList?: string[];
   whiteList?: string[];
@@ -31,13 +34,22 @@ interface IServer {
   nsfwLevel: NSFWLevel;
   isSetup: boolean;
 }
-interface IServerDocument extends IServer, Document {
+export interface IServerDocument extends IServer, Document {
   invite: (
     interaction: CommandInteraction,
 
-    channel: GuildTextBasedChannel,
- 
+    channel: GuildTextBasedChannel
   ) => Promise<void>;
+}
+
+export interface IServerModel extends Model<IServerDocument> {
+  allRequestIds: () => Promise<
+    {
+      requestMessageId: string;
+      originChannelId: string;
+      requestMessageChannelId: string;
+    }[]
+  >;
 }
 
 const serverSchema = new mongoose.Schema<IServerDocument>({
@@ -49,6 +61,18 @@ const serverSchema = new mongoose.Schema<IServerDocument>({
     sparse: true,
   },
   memberCount: { type: Number, required: true, unique: false },
+  requestMessages: [
+    {
+      requestMessageId: { type: String, required: false, unique: false },
+      requestMessageChannelId: {
+        type: String,
+        required: false,
+        unique: false,
+      },
+      originChannelId: { type: String, required: false, unique: false },
+    },
+  ],
+
   adminRoles: [{ type: String, required: false, unique: false }],
   banList: [{ type: String, required: false, unique: false }],
   whiteList: [{ type: String, required: false, unique: false }],
@@ -67,16 +91,14 @@ const serverSchema = new mongoose.Schema<IServerDocument>({
 
 serverSchema.methods.invite = async function (
   interaction: CommandInteraction,
-  channel: GuildTextBasedChannel,
-
+  channel: GuildTextBasedChannel
 ): Promise<void> {
-  const trafficChannelId = this.trafficChannelId;
-  if (!trafficChannelId) {
-    throw new Error(OTHER_NO_TRAFFIC_CHANNEL);
-  }
+  const trafficChannelId = this.trafficChannelId || "";
+
   const trafficChannel = getTextChannel(interaction.client, trafficChannelId);
+
   if (!trafficChannel) {
-    throw new Error(OTHER_NO_TRAFFIC_CHANNEL);
+    return;
   }
   const messageContent = await PortalViews.request(
     interaction,
@@ -85,10 +107,39 @@ serverSchema.methods.invite = async function (
   );
 
   const requestMessage = await trafficChannel.send(messageContent);
+  this.requestMessages
+    ? this.requestMessages.push({
+        requestMessageId: requestMessage.id,
+        originChannelId: channel.id,
+        requestMessageChannelId: trafficChannel.id,
+      })
+    : (this.requestMessages = [
+        {
+          requestMessageId: requestMessage.id,
+          originChannelId: channel.id,
+          requestMessageChannelId: trafficChannel.id,
+        },
+      ]);
+  await this.save();
   portalRequestCollector(requestMessage, channel);
 };
 
-export const Server = model<IServerDocument>(SERVER_MODEL, serverSchema);
+serverSchema.statics.allRequestIds = async function () {
+  const servers = await this.find({
+    trafficChannelId: { $exists: true, $nin: ["", undefined] },
+    requestMessages: { $exists: true, $ne: [] },
+  });
+
+  const requests = servers.map(
+    (server: IServerDocument) => server.requestMessages
+  );
+  return requests.flat();
+};
+
+export const Server = model<IServerDocument, IServerModel>(
+  SERVER_MODEL,
+  serverSchema
+);
 export const getTrafficChannel = async (
   server: Guild
 ): Promise<GuildTextBasedChannel> => {

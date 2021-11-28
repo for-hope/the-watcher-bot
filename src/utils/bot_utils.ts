@@ -2,11 +2,12 @@ import {
   Guild,
   CategoryChannel,
   TextChannel,
-  Role,
   Client,
   GuildChannel,
   User,
+  Message,
 } from "discord.js";
+import { GUILD_NOT_FOUND } from "./bot_error_message";
 
 //CONSTANTS
 
@@ -49,9 +50,7 @@ export const overwritePortalPermissions = async (
 export const getGuild = (client: Client, guildId: string): Guild => {
   const guild = client.guilds.cache.find((guild) => guild.id === guildId);
   if (!guild) {
-    throw new Error(
-      GUILD_NOT_FOUND
-    );
+    throw new Error(GUILD_NOT_FOUND);
   }
   return guild;
 };
@@ -64,6 +63,18 @@ export const getTextChannel = (
     (channel) => channel.id === channelId
   ) as TextChannel;
   return channel;
+};
+
+export const getMessage = async (
+  client: Client,
+  messageId: string,
+  channelId: string
+): Promise<Message | undefined> => {
+  const message = await getTextChannel(client, channelId)?.messages.fetch(
+    messageId
+  );
+
+  return message;
 };
 
 export const deletedChannelAuthor = async (channel: TextChannel) => {

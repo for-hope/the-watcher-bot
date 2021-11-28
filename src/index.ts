@@ -4,6 +4,9 @@ import { token } from "./config.json";
 import path from "path";
 import { readdir, readdirSync } from "fs";
 import { connectDb } from "./db/dbClient";
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 export interface ClientExpended extends Client {
   commands?: Collection<string, (event: runEvent) => any>;

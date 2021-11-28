@@ -1,23 +1,23 @@
 import {
   ButtonInteraction,
-  CacheType,
   CategoryChannel,
-  CollectorFilter,
   Guild,
   GuildTextBasedChannel,
   Message,
-  MessageComponentInteraction,
 } from "discord.js";
 
-import { addOrUpdateServerOnPortal, PortalRequest } from "../db/portalClient";
+import { portalByServersChannelId, PortalRequest } from "../db/portalClient";
 import { hasManagerPermission } from "../utils/permissions";
 
 import {
   getOrCreateBotCategory,
+  getTextChannel,
   PORTALS_CATEGORY_NAME,
 } from "../utils/bot_utils";
 import { PortalResponses } from "../types/portal";
-//TODO setup collectors correctly
+
+import { updateRequestStatusMessage } from "../services/portalService";
+
 export const portalRequestCollector = (
   message: Message,
   channel: GuildTextBasedChannel
@@ -30,12 +30,17 @@ export const portalRequestCollector = (
   });
 
   collector.on("collect", async (i: ButtonInteraction) => {
-    console.log(i.customId);
     const hasPerms = await hasManagerPermission(i);
     if (!hasPerms) {
       return;
     }
     const guild = i.guild as Guild;
+    const portal = await portalByServersChannelId(channel.id);
+    if (!portal) {
+      //error
+      return;
+    }
+
     if (i.customId === PortalResponses.approve) {
       const multiverseCategory = (
         await getOrCreateBotCategory(guild, PORTALS_CATEGORY_NAME)
@@ -46,22 +51,27 @@ export const portalRequestCollector = (
         type: "GUILD_TEXT",
         parent: multiverseCategory as CategoryChannel,
       });
+
+      const portal = await portalByServersChannelId(channel.id);
+      if (!portal) {
+        //error
+        return;
+      }
+
       //mention the channel
       const channelMention = portalChannel.toString();
-      const channelIdsOnPortal = await addOrUpdateServerOnPortal(
-        channel.id,
-        portalChannel.id,
+
+      const updatedPortal = await portal.approveServerRequest(
         i.guildId,
-        PortalRequest.approved,
-        null,
-        null,
-        i.client
+        portalChannel.id
       );
 
-      channelIdsOnPortal.forEach(async (channelId) => {
-        const channelById = i.client.channels.cache.find(
-          (clientChannel) => clientChannel.id === channelId
-        ) as GuildTextBasedChannel;
+      updatedPortal.validChannelIds().forEach(async (channelId) => {
+        console.log(channelId);
+        const channelById = getTextChannel(i.client, channelId);
+        if (!channelById) {
+          return;
+        }
         await channelById.send(
           `:white_check_mark: **${i.user.tag}** from **${guild.name}** approved the portal request! You may now use this channel to communicate between servers.`
         );
@@ -71,15 +81,18 @@ export const portalRequestCollector = (
         content: "✅ **Portal request approved!** on " + channelMention,
         components: [],
       });
+
+      await updateRequestStatusMessage(
+        i.client,
+        portal.myServer(i.guildId),
+        PortalRequest.approved
+      );
     } else if (i.customId === PortalResponses.deny) {
-      const channelIdsOnPortal = await addOrUpdateServerOnPortal(
-        channel.id,
-        "",
-        i.guildId,
-        PortalRequest.denied,
-        null,
-        null,
-        i.client
+      portal.denyServerRequest(i.guildId);
+      await updateRequestStatusMessage(
+        i.client,
+        portal.myServer(i.guildId),
+        PortalRequest.denied
       );
       await i.update({
         content: "❌ Portal request denied",
