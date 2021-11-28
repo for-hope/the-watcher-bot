@@ -3,17 +3,12 @@ import {
   NSFWLevel,
   GuildTextBasedChannel,
   CommandInteraction,
-  Message,
-  ButtonInteraction,
 } from "discord.js";
 import mongoose, { model, Document, Model } from "mongoose";
 import { getTextChannel } from "../utils/bot_utils";
-import { portalRequestEmbed } from "../views/embeds/portalRequestEmbed";
-import { portalRequestAction } from "../views/actions/portalRequestActions";
+
 import { PortalViews } from "../views/portalViews";
 import { portalRequestCollector } from "../collectors/portalRequest";
-import { PortalResponses } from "../types/portal";
-import { IPortalDocument } from "./portalClient";
 
 export const SERVER_MODEL = "Server";
 

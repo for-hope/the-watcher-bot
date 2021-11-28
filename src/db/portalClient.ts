@@ -52,6 +52,17 @@ export interface IPortalDocument extends IPortal, Document {
     serverDoc: IServerDocument,
     id: string
   ) => Promise<IPortalDocument>;
+
+  approveServerRequest: (
+    guildId: string,
+    channelId: string
+  ) => Promise<IPortalDocument>;
+
+  denyServerRequest: (serverId: string) => Promise<IPortalDocument>;
+
+  validChannelIds: () => Array<string>;
+
+
 }
 
 export interface IPortalModel extends Model<IPortalDocument> {
@@ -127,6 +138,51 @@ portalSchema.methods.addServerRequest = async function (
   return portal.save();
 };
 
+portalSchema.methods.denyServerRequest = async function (serverId: string) {
+  const portal = this;
+  portal.servers.forEach((server) => {
+    if (
+      server.server_id === serverId &&
+      server.server_status === PortalRequest.pending
+    ) {
+      server.server_status = PortalRequest.denied;
+      return;
+    }
+  });
+  return portal.save();
+};
+
+portalSchema.methods.validChannelIds = function () {
+  const portal = this;
+
+  //remove server if it exists on portal
+  const approvedChannelIds = portal.servers.map((server) => {
+    if (server.server_status !== PortalRequest.approved) {
+      return server.channel_id;
+    }
+  });
+
+  return approvedChannelIds;
+};
+
+portalSchema.methods.approveServerRequest = async function (
+  guildId: string,
+  channelId: string
+) {
+  const portal = this;
+  portal.servers.forEach((server) => {
+    if (
+      server.server_id === guildId &&
+      server.server_status === PortalRequest.pending
+    ) {
+      server.server_status = PortalRequest.approved;
+      server.channel_id = channelId;
+      return;
+    }
+  });
+  return portal.save();
+};
+
 //TODO handle too many requests / limits
 portalSchema.statics.requestMessages = async function () {
   const requestMessages: Array<{
@@ -141,7 +197,10 @@ portalSchema.statics.requestMessages = async function () {
   return requestMessages;
 };
 
-export const Portal = model<IPortalDocument, IPortalModel>(PORTAL_MODEL, portalSchema);
+export const Portal = model<IPortalDocument, IPortalModel>(
+  PORTAL_MODEL,
+  portalSchema
+);
 
 export const getOriginChannelId = async (
   channelId: string
