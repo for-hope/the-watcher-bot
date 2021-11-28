@@ -1,19 +1,12 @@
 import {
   ButtonInteraction,
-  CacheType,
   CategoryChannel,
-  CollectorFilter,
   Guild,
   GuildTextBasedChannel,
   Message,
-  MessageComponentInteraction,
 } from "discord.js";
 
-import {
-  addOrUpdateServerOnPortal,
-  portalByServersChannelId,
-  PortalRequest,
-} from "../db/portalClient";
+import { portalByServersChannelId, PortalRequest } from "../db/portalClient";
 import { hasManagerPermission } from "../utils/permissions";
 
 import {
@@ -22,8 +15,9 @@ import {
   PORTALS_CATEGORY_NAME,
 } from "../utils/bot_utils";
 import { PortalResponses } from "../types/portal";
-import { getServerById } from "../db/serversClient";
-//TODO setup collectors correctly
+
+import { updateRequestStatusMessage } from "../services/portalService";
+
 export const portalRequestCollector = (
   message: Message,
   channel: GuildTextBasedChannel
@@ -87,8 +81,19 @@ export const portalRequestCollector = (
         content: "✅ **Portal request approved!** on " + channelMention,
         components: [],
       });
+
+      await updateRequestStatusMessage(
+        i.client,
+        portal.myServer(i.guildId),
+        PortalRequest.approved
+      );
     } else if (i.customId === PortalResponses.deny) {
       portal.denyServerRequest(i.guildId);
+      await updateRequestStatusMessage(
+        i.client,
+        portal.myServer(i.guildId),
+        PortalRequest.denied
+      );
       await i.update({
         content: "❌ Portal request denied",
         components: [],

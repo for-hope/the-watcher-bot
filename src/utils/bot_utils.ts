@@ -73,6 +73,7 @@ export const getMessage = async (
   const message = await getTextChannel(client, channelId)?.messages.fetch(
     messageId
   );
+
   return message;
 };
 

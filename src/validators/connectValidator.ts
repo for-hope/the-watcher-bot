@@ -187,7 +187,6 @@ export class ConnectValidator {
 
   public async createOrGetPortal(): Promise<IPortalDocument | null> {
     if (this.portal) {
-      console.log("Portal already exists");
       return this.portal;
     }
     const portal = await createServerOnPortal(
@@ -199,7 +198,7 @@ export class ConnectValidator {
       this.interaction.reply(PORTAL_CREATE_UNKNOWN_ERROR);
       return null;
     }
-    console.log("Portal created");
+
     this.portal = portal;
     return portal;
   }
@@ -215,8 +214,9 @@ export class ConnectValidator {
       return false;
     }
     await this.portal.addServerRequest(
-      this.invitedServer as IServerDocument,
-      requestStatusMsgId
+      this.invitedGuildId,
+      requestStatusMsgId,
+      this.server?.trafficChannelId as string
     );
 
     return true;

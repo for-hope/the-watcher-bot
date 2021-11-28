@@ -49,8 +49,9 @@ export interface IPortalDocument extends IPortal, Document {
   ) => Promise<IPortalDocument>;
 
   addServerRequest: (
-    serverDoc: IServerDocument,
-    id: string
+    guildId: string,
+    requestId: string,
+    requestChannelId: string
   ) => Promise<IPortalDocument>;
 
   approveServerRequest: (
@@ -61,6 +62,8 @@ export interface IPortalDocument extends IPortal, Document {
   denyServerRequest: (serverId: string) => Promise<IPortalDocument>;
 
   validChannelIds: () => Array<string>;
+
+  myServer: (serverId: string) => IPortalServer;
 }
 
 export interface IPortalModel extends Model<IPortalDocument> {
@@ -91,33 +94,36 @@ const portalSchema = new mongoose.Schema<IPortalDocument>({
   openInvitation: { type: Boolean, default: true }, //other servers can invite other servers to this portal
 });
 
+portalSchema.methods.myServer = function (serverId: string) {
+  return this.servers.find((server) => server.server_id === serverId);
+};
+
 portalSchema.methods.updateServerStatus = async function (
   serverId: string,
   serverStatus: PortalRequest
 ) {
   const portal = this;
-  portal.servers.forEach((server) => {
-    server.server_status = serverStatus;
-  });
+
   portal.servers.forEach((server) => {
     if (server.server_id === serverId) {
       server.server_status = serverStatus;
+      return;
     }
   });
   return portal.save();
 };
 
 portalSchema.methods.addServerRequest = async function (
-  serverDoc: IServerDocument,
-  id: string
+  guildId: string,
+  requestId: string,
+  requestChannelId: string
 ) {
-
   const portal = this;
 
   //remove server if it exists on portal
   portal.servers.forEach((server) => {
     if (
-      server.server_id === serverDoc.serverId &&
+      server.server_id === guildId &&
       server.server_status !== PortalRequest.approved
     ) {
       portal.servers.splice(portal.servers.indexOf(server), 1);
@@ -125,12 +131,12 @@ portalSchema.methods.addServerRequest = async function (
   });
 
   portal.servers.push({
-    server_id: serverDoc.serverId,
+    server_id: guildId,
     channel_id: "",
     server_status: PortalRequest.pending,
     requestMessage: {
-      id,
-      channel_id: serverDoc.trafficChannelId as string,
+      id: requestId,
+      channel_id: requestChannelId,
     },
   });
 
@@ -246,7 +252,6 @@ export const addOrUpdateServerOnPortal = async (
   try {
     let portal = await Portal.findOne({ originChannelId: originChannelId });
     if (!portal) {
-  
       return [];
     }
 
@@ -255,7 +260,6 @@ export const addOrUpdateServerOnPortal = async (
       (server) => server.server_id === serverId
     );
     if (!server) {
- 
       portal.servers.push({
         server_id: serverId,
         channel_id: channelId,
@@ -266,13 +270,11 @@ export const addOrUpdateServerOnPortal = async (
         },
       });
     } else {
-
       server.server_status = serverStatus;
       if (!server.channel_id) {
         server.channel_id = channelId;
       }
       if (requestMessageId !== null && requestMessageChannelId !== null) {
- 
         server.requestMessage = {
           id: requestMessageId,
           channel_id: requestMessageChannelId,
@@ -284,20 +286,18 @@ export const addOrUpdateServerOnPortal = async (
     const reqMsgId: string =
       requestMessageId || server?.requestMessage.id || "";
     if (client) {
- 
       const channel = client.channels.cache.get(reqMsgChannelId) as TextChannel;
       const msg = await channel.messages.fetch(reqMsgId);
       if (msg) {
-        
         //edit message
         const embed = msg.embeds[0];
         embed.fields[0].value = CONNECTION_REQUEST_STATUS(serverStatus);
         await msg.edit({ embeds: [embed] });
       }
     }
- 
+
     await portal.save();
-   
+
     return portal.servers.map((server) => server.channel_id);
   } catch (err: any) {
     console.log("Can't update portal Err: " + err.toString());
@@ -316,11 +316,8 @@ export const createServerOnPortal = async (
     let portal = await Portal.findOne({ "servers.channel_id": channelId });
 
     if (portal) {
-  
       return portal;
     }
-
-
 
     portal = new Portal({
       name: portalName,
