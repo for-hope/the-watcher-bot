@@ -5,7 +5,6 @@ import {
   TextChannel,
 } from "discord.js";
 import {
-
   createServerOnPortal,
   IPortalDocument,
   portalByServersChannelId,
@@ -14,6 +13,18 @@ import {
 import { hasManagerPermission } from "../utils/permissions";
 import { getGuild, getTextChannel } from "../utils/bot_utils";
 import { getServerById, IServerDocument } from "../db/serversClient";
+import {
+  NO_COMMAND_PERMISSON,
+  OPEN_INVITES_DISABLED,
+  OTHER_SERVER_NOT_SETUP,
+  PORTAL_ALREADY_CONNECTED,
+  PORTAL_CONNECT_TRAFFIC,
+  PORTAL_CREATE_UNKNOWN_ERROR,
+  PORTAL_PENDING_APPROVAL,
+  PORTAL_SERVER_BANNED,
+  SELF_NO_TRAFFIC_CHANNEL,
+  SELF_SERVER_NOT_SETUP,
+} from "../utils/bot_error_message";
 
 export class ConnectValidator {
   private interaction: CommandInteraction;
@@ -176,6 +187,7 @@ export class ConnectValidator {
 
   public async createOrGetPortal(): Promise<IPortalDocument | null> {
     if (this.portal) {
+      console.log("Portal already exists");
       return this.portal;
     }
     const portal = await createServerOnPortal(
@@ -187,6 +199,8 @@ export class ConnectValidator {
       this.interaction.reply(PORTAL_CREATE_UNKNOWN_ERROR);
       return null;
     }
+    console.log("Portal created");
+    this.portal = portal;
     return portal;
   }
 
@@ -196,7 +210,11 @@ export class ConnectValidator {
       this.channelToOpenPortalOn
     );
 
-    await this.portal?.addServerRequest(
+    if (!this.portal) {
+      this.interaction.reply(PORTAL_CREATE_UNKNOWN_ERROR);
+      return false;
+    }
+    await this.portal.addServerRequest(
       this.invitedServer as IServerDocument,
       requestStatusMsgId
     );

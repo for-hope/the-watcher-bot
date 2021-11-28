@@ -61,8 +61,6 @@ export interface IPortalDocument extends IPortal, Document {
   denyServerRequest: (serverId: string) => Promise<IPortalDocument>;
 
   validChannelIds: () => Array<string>;
-
-
 }
 
 export interface IPortalModel extends Model<IPortalDocument> {
@@ -113,6 +111,7 @@ portalSchema.methods.addServerRequest = async function (
   serverDoc: IServerDocument,
   id: string
 ) {
+
   const portal = this;
 
   //remove server if it exists on portal
@@ -156,13 +155,12 @@ portalSchema.methods.validChannelIds = function () {
   const portal = this;
 
   //remove server if it exists on portal
-  const approvedChannelIds = portal.servers.map((server) => {
-    if (server.server_status !== PortalRequest.approved) {
-      return server.channel_id;
-    }
-  });
 
-  return approvedChannelIds;
+  const approvedChannelIds = portal.servers
+    .filter((server) => server.server_status === PortalRequest.approved)
+    .map((server) => server.channel_id);
+
+  return approvedChannelIds.flat();
 };
 
 portalSchema.methods.approveServerRequest = async function (
@@ -248,7 +246,7 @@ export const addOrUpdateServerOnPortal = async (
   try {
     let portal = await Portal.findOne({ originChannelId: originChannelId });
     if (!portal) {
-      console.log("Portal doesn't exist");
+  
       return [];
     }
 
@@ -257,7 +255,7 @@ export const addOrUpdateServerOnPortal = async (
       (server) => server.server_id === serverId
     );
     if (!server) {
-      console.log("Server doesn't exist");
+ 
       portal.servers.push({
         server_id: serverId,
         channel_id: channelId,
@@ -268,13 +266,13 @@ export const addOrUpdateServerOnPortal = async (
         },
       });
     } else {
-      console.log("Server exists");
+
       server.server_status = serverStatus;
       if (!server.channel_id) {
         server.channel_id = channelId;
       }
       if (requestMessageId !== null && requestMessageChannelId !== null) {
-        console.log("Request message exists");
+ 
         server.requestMessage = {
           id: requestMessageId,
           channel_id: requestMessageChannelId,
@@ -286,20 +284,20 @@ export const addOrUpdateServerOnPortal = async (
     const reqMsgId: string =
       requestMessageId || server?.requestMessage.id || "";
     if (client) {
-      console.log("Request message exists");
+ 
       const channel = client.channels.cache.get(reqMsgChannelId) as TextChannel;
       const msg = await channel.messages.fetch(reqMsgId);
       if (msg) {
-        console.log("Message exists");
+        
         //edit message
         const embed = msg.embeds[0];
         embed.fields[0].value = CONNECTION_REQUEST_STATUS(serverStatus);
         await msg.edit({ embeds: [embed] });
       }
     }
-    console.log("Saving portal");
+ 
     await portal.save();
-    console.log("Portal updated!");
+   
     return portal.servers.map((server) => server.channel_id);
   } catch (err: any) {
     console.log("Can't update portal Err: " + err.toString());
@@ -318,11 +316,11 @@ export const createServerOnPortal = async (
     let portal = await Portal.findOne({ "servers.channel_id": channelId });
 
     if (portal) {
-      console.log("Channel Already exists on other portal.");
+  
       return portal;
     }
 
-    console.log("No portal found, creating one...");
+
 
     portal = new Portal({
       name: portalName,
@@ -339,7 +337,7 @@ export const createServerOnPortal = async (
     });
 
     await portal.save();
-    console.log("Portal added.");
+
     return portal;
   } catch (err) {
     console.log(err);

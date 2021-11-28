@@ -51,6 +51,7 @@ module.exports = {
         ),
       ],
     });
+    console.log("inviting server...")
     await connectCommand.inviteServer(connectionRequestStatusMessage.id);
 
     await interaction.reply(

@@ -2,12 +2,12 @@ import {
   Guild,
   CategoryChannel,
   TextChannel,
-  Role,
   Client,
   GuildChannel,
   User,
   Message,
 } from "discord.js";
+import { GUILD_NOT_FOUND } from "./bot_error_message";
 
 //CONSTANTS
 

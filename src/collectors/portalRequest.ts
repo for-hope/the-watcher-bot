@@ -66,15 +66,6 @@ export const portalRequestCollector = (
 
       //mention the channel
       const channelMention = portalChannel.toString();
-      // const channelIdsOnPortal = await addOrUpdateServerOnPortal(
-      //   channel.id,
-      //   portalChannel.id,
-      //   i.guildId,
-      //   PortalRequest.approved,
-      //   null,
-      //   null,
-      //   i.client
-      // );
 
       const updatedPortal = await portal.approveServerRequest(
         i.guildId,
@@ -82,6 +73,7 @@ export const portalRequestCollector = (
       );
 
       updatedPortal.validChannelIds().forEach(async (channelId) => {
+        console.log(channelId);
         const channelById = getTextChannel(i.client, channelId);
         if (!channelById) {
           return;
