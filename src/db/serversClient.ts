@@ -25,8 +25,9 @@ interface IServer {
     }
   ];
   adminRoles?: string[];
-  banList?: string[];
+  bannedServers?: string[];
   whiteList?: string[];
+  bannedUsers?: string[];
   allowServerBanned?: boolean;
   createdAt: Date;
   botJoinedAt: Date;
@@ -74,7 +75,8 @@ const serverSchema = new mongoose.Schema<IServerDocument>({
   ],
 
   adminRoles: [{ type: String, required: false, unique: false }],
-  banList: [{ type: String, required: false, unique: false }],
+  bannedServers: [{ type: String, required: false, unique: false }],
+  bannedUsers: [{ type: String, required: false, unique: false }],
   whiteList: [{ type: String, required: false, unique: false }],
   allowServerBanned: {
     type: Boolean,

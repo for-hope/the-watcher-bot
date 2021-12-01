@@ -1,55 +1,69 @@
 import { Client, Message, MessageEmbed, TextChannel, Guild } from "discord.js";
 import { randomColor } from "../utils/decoration";
 import { channelDimension, dimensionChannels } from "../db/dimensionClient";
-import { getOriginChannelId, getChannelIdsOnPortal } from "../db/portalClient";
+import {
+  getOriginChannelId,
+  getChannelIdsOnPortal,
+  Portal,
+} from "../db/portalClient";
+import {
+  allowMessage,
+  filterMessage,
+  isBlacklistedFromPortal,
+} from "../services/messageServices";
 
 module.exports = {
   name: "messageCreate",
   execute(message: Message) {
-    if (message.author.bot) {
-      return;
-    }
-
-    const client = message.client;
+    if (message.author.bot) return;
 
     //check if channel id is in a dimension
     channelDimension(message.channel.id).then(async (dimensionName) => {
       if (dimensionName) {
         const ids = await dimensionChannels(dimensionName);
-        forwardMessageIfIncluded(ids, message, client);
+        await forwardMessageIfIncluded(ids, message);
       }
     });
 
-    getOriginChannelId(message.channel.id).then(async (originChannelId: string) => {
-      if (originChannelId) {
+    getOriginChannelId(message.channel.id).then(
+      async (originChannelId: string) => {
+        if (!originChannelId) return;
         const ids = await getChannelIdsOnPortal(originChannelId);
-        forwardMessageIfIncluded(ids, message, client);
+        const blacklisted = await isBlacklistedFromPortal(
+          message,
+          originChannelId
+        );
+        if (blacklisted) return;
+
+        await forwardMessageIfIncluded(ids, message);
       }
-    });
+    );
   },
 };
 
-const forwardMessageIfIncluded = (
-  ids: string[],
-  message: Message,
-  client: Client
-) => {
-  if (ids.includes(message.channel.id)) {
-    console.log(`message is included ` + message.cleanContent);
-    const originalMessageId = message.id;
-    message.delete();
-    const channels = client.channels.cache.filter((channel) => {
-      return ids.includes(channel.id);
-    });
+const forwardMessageIfIncluded = async (ids: string[], message: Message) => {
+  const client = message.client as Client;
+  if (!ids.includes(message.channel.id)) return;
+  message.delete();
+  const messageAllowed = await allowMessage(message);
+  if (!messageAllowed) {
+    console.log("message not allowed");
+    return;
+  } //message is not allowed
+  //channels in the portal
+  const channels = client.channels.cache.filter((channel) => {
+    return ids.includes(channel.id);
+  });
 
-    channels.forEach(async (channel) => {
-      if (channel instanceof TextChannel) {
-        await channel.send({
-          embeds: [getMessageEmbed(message)],
-        });
-      }
+  channels.forEach(async (channel) => {
+    if (await filterMessage(message, channel as TextChannel)) {
+      console.log("message filtered");
+      return;
+    }
+    await (channel as TextChannel).send({
+      embeds: [getMessageEmbed(message)],
     });
-  }
+  });
 };
 const extractUrlFromMessage = (message: string) => {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
