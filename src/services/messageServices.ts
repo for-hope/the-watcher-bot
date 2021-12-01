@@ -1,12 +1,12 @@
 import { Message } from "discord.js";
 import { Blacklist } from "../db/blacklistClient";
 
-const messageCooldown = 1500; //2 seconds in ms
+const messageCooldown = 5000; //5 seconds in ms
 const createdAtCooldown = 86400000; //24h
 const joinedAtCooldown = 14400000; //4h
 const talkedRecently = new Set();
 
- const messageTimeout = (message: Message): boolean => {
+const messageTimeout = (message: Message): boolean => {
   if (talkedRecently.has(message.author.id)) {
     return false;
   }
