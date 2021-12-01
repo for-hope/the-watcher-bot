@@ -1,4 +1,4 @@
-import { Message } from "discord.js";
+import { Guild, Message, User, TextChannel } from 'discord.js';
 import { Blacklist } from "../db/blacklistClient";
 
 const messageCooldown = 5000; //5 seconds in ms
@@ -43,4 +43,13 @@ export const allowMessage = async (message: Message): Promise<boolean> => {
   const isNotNewJoined = messageNewJoined(message);
   const isNotTimeout = messageTimeout(message);
   return isNotBlacklisted && isNotNewAccount && isNotNewJoined && isNotTimeout;
+};
+
+export const isBannedFromGuild = (user: User, guild: Guild): boolean => {
+  const bannedUsers = guild.bans.cache.map((ban) => ban.user.id);
+  return bannedUsers.includes(user.id);
+};
+
+export const filterMessage = (message: Message, channel: TextChannel): boolean => {
+  return !isBannedFromGuild(message.author, message.guild as Guild);
 };

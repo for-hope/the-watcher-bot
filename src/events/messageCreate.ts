@@ -2,7 +2,7 @@ import { Client, Message, MessageEmbed, TextChannel, Guild } from "discord.js";
 import { randomColor } from "../utils/decoration";
 import { channelDimension, dimensionChannels } from "../db/dimensionClient";
 import { getOriginChannelId, getChannelIdsOnPortal } from "../db/portalClient";
-import { allowMessage } from "../services/messageServices";
+import { allowMessage, filterMessage } from "../services/messageServices";
 
 module.exports = {
   name: "messageCreate",
@@ -38,20 +38,19 @@ const forwardMessageIfIncluded = async (
   client: Client
 ) => {
   if (ids.includes(message.channel.id)) {
-    const originalMessageId = message.id;
     message.delete();
     const messageAllowed = await allowMessage(message);
     if (!messageAllowed) return; //message is not allowed
+    //channels in the portal
     const channels = client.channels.cache.filter((channel) => {
       return ids.includes(channel.id);
     });
 
     channels.forEach(async (channel) => {
-      if (channel instanceof TextChannel) {
-        await channel.send({
-          embeds: [getMessageEmbed(message)],
-        });
-      }
+      if (filterMessage(message, channel as TextChannel)) return;
+      await (channel as TextChannel).send({
+        embeds: [getMessageEmbed(message)],
+      });
     });
   }
 };
