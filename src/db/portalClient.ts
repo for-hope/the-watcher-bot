@@ -1,7 +1,6 @@
 import { Client, CommandInteraction, TextChannel } from "discord.js";
 import mongoose, { model, Document, Model } from "mongoose";
 import { CONNECTION_REQUEST_STATUS } from "../utils/bot_embeds";
-import { IServerDocument } from "./serversClient";
 
 export const PORTAL_MODEL = "Portal";
 
@@ -12,6 +11,10 @@ export interface IPortalServer {
   requestMessage: {
     id: string;
     channel_id: string;
+  };
+  muted?: {
+    mutedOn: number;
+    duration: number;
   };
 }
 export interface IPortal {
@@ -29,8 +32,14 @@ export interface IPortal {
         id: string;
         channel_id: string;
       };
+      muted?: {
+        mutedOn: number;
+        duration: number;
+      };
     }
   ];
+  bannedServers: [string];
+  bannedUsers: [string];
 }
 export enum PortalRequest {
   approved = "Approved",
@@ -64,6 +73,10 @@ export interface IPortalDocument extends IPortal, Document {
   validChannelIds: () => Array<string>;
 
   myServer: (serverId: string) => IPortalServer;
+
+  isMemberBlacklisted: (userId: string) => boolean;
+  isServerBlacklisted: (serverId: string) => boolean;
+  isServerMuted: (serverId: string) => boolean;
 }
 
 export interface IPortalModel extends Model<IPortalDocument> {
@@ -85,6 +98,10 @@ const portalSchema = new mongoose.Schema<IPortalDocument>({
       requestMessage: {
         id: { type: String, required: false },
         channel_id: { type: String, required: false },
+      },
+      muted: {
+        mutedOn: { type: Number, required: false },
+        duration: { type: Number, required: false },
       },
     },
   ],
@@ -185,6 +202,27 @@ portalSchema.methods.approveServerRequest = async function (
     }
   });
   return portal.save();
+};
+
+portalSchema.methods.isMemberBlacklisted = function (userId: string) {
+  const portal = this;
+  return portal.bannedUsers.includes(userId);
+};
+
+portalSchema.methods.isServerBlacklisted = function (serverId: string) {
+  const portal = this;
+  return portal.bannedServers.includes(serverId);
+};
+
+portalSchema.methods.isServerMuted = function (serverId: string) {
+  const portal = this;
+  const server = portal.servers.find((server) => server.server_id === serverId);
+  if (server) {
+    const muted = server.muted;
+    if (!muted) return false;
+    return muted.mutedOn + muted.duration > Date.now();
+  }
+  return false;
 };
 
 //TODO handle too many requests / limits

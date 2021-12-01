@@ -1,5 +1,7 @@
-import { Guild, Message, User, TextChannel } from 'discord.js';
+import { Guild, Message, User, TextChannel } from "discord.js";
 import { Blacklist } from "../db/blacklistClient";
+import { Server } from "../db/serversClient";
+import { Portal } from "../db/portalClient";
 
 const messageCooldown = 5000; //5 seconds in ms
 const createdAtCooldown = 86400000; //24h
@@ -28,6 +30,20 @@ const messageBlacklist = async (message: Message): Promise<boolean> => {
   );
 };
 
+const isBlacklistedFromServer = async (
+  message: Message,
+  guild: Guild
+): Promise<boolean> => {
+  const server = await Server.findOne({ serverId: guild.id });
+  if (!server) return false;
+  const bannedUsers = server.bannedUsers || [];
+  const bannedServers = server.bannedServers || [];
+  return (
+    bannedUsers.includes(message.author.id) ||
+    bannedServers.includes(message.guildId as string)
+  );
+};
+
 const messageNewAccount = (message: Message): boolean => {
   return Date.now() - message.author.createdTimestamp > createdAtCooldown;
 };
@@ -50,6 +66,31 @@ export const isBannedFromGuild = (user: User, guild: Guild): boolean => {
   return bannedUsers.includes(user.id);
 };
 
-export const filterMessage = (message: Message, channel: TextChannel): boolean => {
-  return !isBannedFromGuild(message.author, message.guild as Guild);
+export const filterMessage = (
+  message: Message,
+  channel: TextChannel
+): boolean => {
+  return (
+    !isBannedFromGuild(message.author, message.guild as Guild) ||
+    !isBlacklistedFromServer(message, message.guild as Guild)
+  );
+};
+
+export const isBlacklistedFromPortal = async (
+  message: Message,
+  originChannelId: string
+): Promise<boolean> => {
+  const portal = await Portal.findOne({
+    where: { originChannelId },
+  });
+  if (!portal) return false;
+  if (
+    portal.isMemberBlacklisted(message.member?.id as string) ||
+    portal.isServerBlacklisted(message?.guildId as string) ||
+    portal.isServerMuted(message?.guildId as string)
+  ) {
+    return true;
+  }
+
+  return false;
 };
