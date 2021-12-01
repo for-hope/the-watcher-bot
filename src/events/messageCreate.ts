@@ -46,14 +46,20 @@ const forwardMessageIfIncluded = async (ids: string[], message: Message) => {
   if (!ids.includes(message.channel.id)) return;
   message.delete();
   const messageAllowed = await allowMessage(message);
-  if (!messageAllowed) return; //message is not allowed
+  if (!messageAllowed) {
+    console.log("message not allowed");
+    return;
+  } //message is not allowed
   //channels in the portal
   const channels = client.channels.cache.filter((channel) => {
     return ids.includes(channel.id);
   });
 
   channels.forEach(async (channel) => {
-    if (filterMessage(message, channel as TextChannel)) return;
+    if (await filterMessage(message, channel as TextChannel)) {
+      console.log("message filtered");
+      return;
+    }
     await (channel as TextChannel).send({
       embeds: [getMessageEmbed(message)],
     });

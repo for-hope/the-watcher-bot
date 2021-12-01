@@ -20,8 +20,8 @@ const messageTimeout = (message: Message): boolean => {
 };
 
 const messageBlacklist = async (message: Message): Promise<boolean> => {
-  const blacklistedServers = await Blacklist.servers();
-  const blacklistedUsers = await Blacklist.users();
+  const blacklistedServers = (await Blacklist.servers()) || [];
+  const blacklistedUsers = (await Blacklist.users()) || [];
   const guildId = message.guildId as string;
 
   return (
@@ -62,17 +62,21 @@ export const allowMessage = async (message: Message): Promise<boolean> => {
 };
 
 export const isBannedFromGuild = (user: User, guild: Guild): boolean => {
-  const bannedUsers = guild.bans.cache.map((ban) => ban.user.id);
+  const bannedUsers = guild.bans.cache.map((ban) => ban.user.id) || [];
   return bannedUsers.includes(user.id);
 };
 
-export const filterMessage = (
+export const filterMessage = async (
   message: Message,
   channel: TextChannel
-): boolean => {
+): Promise<boolean> => {
+  const blacklistedFromServer = await isBlacklistedFromServer(
+    message,
+    channel.guild as Guild
+  );
   return (
-    !isBannedFromGuild(message.author, message.guild as Guild) ||
-    !isBlacklistedFromServer(message, message.guild as Guild)
+    isBannedFromGuild(message.author, channel.guild as Guild) ||
+    blacklistedFromServer
   );
 };
 

@@ -206,12 +206,12 @@ portalSchema.methods.approveServerRequest = async function (
 
 portalSchema.methods.isMemberBlacklisted = function (userId: string) {
   const portal = this;
-  return portal.bannedUsers.includes(userId);
+  return portal.bannedUsers?.includes(userId);
 };
 
 portalSchema.methods.isServerBlacklisted = function (serverId: string) {
   const portal = this;
-  return portal.bannedServers.includes(serverId);
+  return portal.bannedServers?.includes(serverId);
 };
 
 portalSchema.methods.isServerMuted = function (serverId: string) {
