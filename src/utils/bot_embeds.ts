@@ -5,6 +5,7 @@ import {
   GuildMember,
   Guild,
   ClientUser,
+  Client,
 } from "discord.js";
 import { PortalRequestEmojis } from "./decoration";
 
@@ -48,3 +49,48 @@ export const CONNECTION_REQUEST_SENT = (
     );
 };
 
+export const failedMessageEmbed = (
+  client: Client,
+  member: GuildMember,
+  failedMessage: string
+) => {
+  return (
+    new MessageEmbed()
+      //set color error
+      .setAuthor(
+        member.user.tag,
+        member.user.avatarURL() || member.user.defaultAvatarURL
+      )
+
+      .setColor(0xff555f)
+      .setDescription(failedMessage)
+      .setTimestamp()
+      .setFooter(
+        client.user?.tag as string,
+        client?.user?.avatarURL() as string
+      )
+  );
+};
+
+export const infoMessageEmbed = (
+  client: Client,
+  member: GuildMember,
+  infoMessage: string
+) => {
+  return (
+    new MessageEmbed()
+      //set color error
+      .setAuthor(
+        member.user.tag,
+        member.user.avatarURL() || member.user.defaultAvatarURL
+      )
+
+      .setColor(0x0099ff)
+      .setDescription(infoMessage)
+      .setTimestamp()
+      .setFooter(
+        client.user?.tag as string,
+        client?.user?.avatarURL() as string
+      )
+  );
+};
