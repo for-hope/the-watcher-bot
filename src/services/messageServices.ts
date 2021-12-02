@@ -1,7 +1,8 @@
-import { Guild, Message, User, TextChannel } from "discord.js";
+import { Guild, Message, User, TextChannel, MessageEmbed } from "discord.js";
 import { Blacklist } from "../db/blacklistClient";
 import { Server } from "../db/serversClient";
 import { Portal } from "../db/portalClient";
+import { extractUrlFromMessage } from "../utils/bot_utils";
 
 const messageCooldown = 5000; //5 seconds in ms
 const createdAtCooldown = 86400000; //24h
@@ -97,4 +98,29 @@ export const isBlacklistedFromPortal = async (
   }
 
   return false;
+};
+
+export const embedMediaHandler = (
+  message: Message,
+  embed: MessageEmbed
+): MessageEmbed => {
+  const image = message.attachments.first()?.url;
+
+  const url = extractUrlFromMessage(message.cleanContent);
+  const imageExtentions = [".png", ".jpg", ".jpeg", ".gif", ".webp"];
+
+  if (image && imageExtentions.some((ext) => image.endsWith(ext))) {
+    embed.setImage(image);
+    return embed;
+  }
+  const urlIsImage =
+    url &&
+    url?.length > 0 &&
+    imageExtentions.some((ext) => url[0].endsWith(ext));
+
+  if (urlIsImage) {
+    embed.setImage(url[0]);
+    return embed;
+  }
+  return embed;
 };

@@ -83,3 +83,9 @@ export const deletedChannelAuthor = async (channel: TextChannel) => {
     (entry) => (entry.target as GuildChannel).id === channel.id
   )?.executor as User | undefined;
 };
+
+export const extractUrlFromMessage = (message: string) => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const url = message.match(urlRegex);
+  return url;
+};
