@@ -6,6 +6,7 @@ import {
   GuildMember,
   GuildTextBasedChannel,
   Role,
+  User,
 } from "discord.js";
 import { setupServer } from "../db/serversClient";
 import { hasManagerPermission } from "../utils/permissions";
@@ -99,7 +100,7 @@ module.exports = {
       embeds: [
         infoMessageEmbed(
           interaction.client,
-          interaction.member as GuildMember,
+          interaction.member.user as User,
           TRAFFIC_CHANNEL_SETUP(interaction.member as GuildMember, adminRole)
         ),
       ],
@@ -117,7 +118,7 @@ module.exports = {
       embeds: [
         infoMessageEmbed(
           interaction.client,
-          interaction.member as GuildMember,
+          interaction.member.user as User,
           BOT_SETUP_REPLY(trafficChannel)
         ),
       ],

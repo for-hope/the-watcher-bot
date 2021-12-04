@@ -20,7 +20,6 @@ export const updateRequestStatusMessage = async (
 
   if (msg) {
     const embed = msg.embeds[0];
-    console.log(embed);
 
     embed.fields[0].value = CONNECTION_REQUEST_STATUS(status);
     await msg.edit({ embeds: [embed] });

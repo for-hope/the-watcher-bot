@@ -6,6 +6,7 @@ import {
   Guild,
   ClientUser,
   Client,
+  User,
 } from "discord.js";
 import { PortalRequestEmojis } from "./decoration";
 
@@ -74,16 +75,13 @@ export const failedMessageEmbed = (
 
 export const infoMessageEmbed = (
   client: Client,
-  member: GuildMember,
+  member: User,
   infoMessage: string
 ) => {
   return (
     new MessageEmbed()
       //set color error
-      .setAuthor(
-        member.user.tag,
-        member.user.avatarURL() || member.user.defaultAvatarURL
-      )
+      .setAuthor(member.tag, member.avatarURL() || member.defaultAvatarURL)
 
       .setColor(0x0099ff)
       .setDescription(infoMessage)

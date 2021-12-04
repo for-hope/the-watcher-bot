@@ -10,6 +10,7 @@ import {
   Guild,
   GuildMember,
   TextChannel,
+  User,
 } from "discord.js";
 import { ChannelType } from "discord-api-types/payloads/v9";
 
@@ -63,7 +64,7 @@ module.exports = {
       embeds: [
         infoMessageEmbed(
           interaction.client,
-          interaction.member as GuildMember,
+          interaction.member.user as User,
           PORTAL_REQUEST_SENT(
             connectCommand.invitedGuild as Guild,
             trafficChannel
