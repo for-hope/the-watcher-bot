@@ -20,7 +20,7 @@ module.exports = {
     .setDescription("Setup the server for interserver communications.")
     .addChannelOption((option) =>
       option
-        .setName("traffic-channel")
+        .setName("traffic_channel")
         .addChannelType(ChannelType.GuildText)
         .setDescription(
           "Specify the text channel on which you recieve or send portal connection requests from other servers."
@@ -37,7 +37,7 @@ module.exports = {
     )
     .addBooleanOption((option) =>
       option
-        .setName("multiverse-chat")
+        .setName("multiverse_chat")
         .setDescription(
           "Creates a general portal channel to all other servers within the bot's reach."
         )

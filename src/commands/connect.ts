@@ -10,7 +10,6 @@ import { ChannelType } from "discord-api-types/payloads/v9";
 
 import { ConnectValidator } from "../validators/connectValidator";
 
-const CONNECT_COMMAND = "/connect";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -51,7 +50,7 @@ module.exports = {
         ),
       ],
     });
-    console.log("inviting server...")
+    console.log("inviting server...");
     await connectCommand.inviteServer(connectionRequestStatusMessage.id);
 
     await interaction.reply(
