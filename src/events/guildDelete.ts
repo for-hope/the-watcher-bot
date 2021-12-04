@@ -1,4 +1,5 @@
-import { Guild } from "discord.js";
+import { Guild, User } from "discord.js";
+import { infoMessageEmbed } from "../utils/bot_embeds";
 
 import { PortalRequest, portalsByServerId } from "../db/portalClient";
 import { getTextChannel } from "../utils/bot_utils";
@@ -21,9 +22,15 @@ module.exports = {
         if (channelId) {
           const portalChannel = getTextChannel(guild.client, channelId);
           if (portalChannel) {
-            portalChannel.send(
-              `**${guild.name}** \`${guild.id}\` has left the portal. [reason : The Watcher Bot cannot access the server anymore.]`
-            );
+            portalChannel.send({
+              embeds: [
+                infoMessageEmbed(
+                  guild.client,
+                  guild.client.user as User,
+                  `**${guild.name}** \`${guild.id}\` has left the portal. [reason : The Watcher Bot cannot access the server anymore.]`
+                ),
+              ],
+            });
           }
         }
       });

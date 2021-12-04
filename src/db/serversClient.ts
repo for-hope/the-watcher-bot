@@ -61,7 +61,7 @@ const serverSchema = new mongoose.Schema<IServerDocument>({
     unique: true,
     sparse: true,
   },
-  memberCount: { type: Number, required: true, unique: false },
+  memberCount: { type: Number, required: false, unique: false },
   requestMessages: [
     {
       requestMessageId: { type: String, required: false, unique: false },
@@ -84,10 +84,10 @@ const serverSchema = new mongoose.Schema<IServerDocument>({
     unique: false,
     default: false,
   },
-  createdAt: { type: Date, required: true, unique: false },
-  botJoinedAt: { type: Date, required: true, unique: false },
+  createdAt: { type: Date, required: false, unique: false },
+  botJoinedAt: { type: Date, required: false, unique: false },
   botLeftAt: { type: Date, required: false, unique: false },
-  nsfwLevel: { type: String, required: true, unique: false },
+  nsfwLevel: { type: String, required: false, unique: false },
   isSetup: { type: Boolean, required: true, unique: false, default: false },
 });
 

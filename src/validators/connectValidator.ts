@@ -1,6 +1,7 @@
 import {
   CommandInteraction,
   Guild,
+  GuildMember,
   GuildTextBasedChannel,
   TextChannel,
 } from "discord.js";
@@ -25,6 +26,7 @@ import {
   SELF_NO_TRAFFIC_CHANNEL,
   SELF_SERVER_NOT_SETUP,
 } from "../utils/bot_error_message";
+import { failedMessageEmbed } from "../utils/bot_embeds";
 
 export class ConnectValidator {
   private interaction: CommandInteraction;
@@ -63,7 +65,7 @@ export class ConnectValidator {
 
   private validateSameServer(): boolean {
     if (this.invitedGuildId === this.interaction.guildId) {
-      this.interaction.reply("You cannot connect to your own server.");
+      this.errReply("You cannot connect to your own server.");
       return false;
     }
     return true;
@@ -71,7 +73,7 @@ export class ConnectValidator {
 
   private async validateManagerPermission(): Promise<boolean> {
     if (!(await hasManagerPermission(this.interaction))) {
-      this.interaction.reply(NO_COMMAND_PERMISSON);
+      this.errReply(NO_COMMAND_PERMISSON);
     }
     return true;
   }
@@ -87,7 +89,7 @@ export class ConnectValidator {
         !openInvite &&
         portalChannel.originChannelId !== this.channelToOpenPortalOn.id
       ) {
-        this.interaction.reply(OPEN_INVITES_DISABLED);
+        this.errReply(OPEN_INVITES_DISABLED);
         return false;
       }
       const portalServer = portalChannel.servers.find(
@@ -98,13 +100,13 @@ export class ConnectValidator {
 
         switch (serverState) {
           case PortalRequest.approved:
-            this.interaction.reply(PORTAL_ALREADY_CONNECTED);
+            this.errReply(PORTAL_ALREADY_CONNECTED);
             return false;
           case PortalRequest.pending:
-            this.interaction.reply(PORTAL_PENDING_APPROVAL);
+            this.errReply(PORTAL_PENDING_APPROVAL);
             return false;
           case PortalRequest.banned:
-            this.interaction.reply(PORTAL_SERVER_BANNED);
+            this.errReply(PORTAL_SERVER_BANNED);
             return false;
           default:
             return true;
@@ -121,7 +123,7 @@ export class ConnectValidator {
         const trafficChannel = getTextChannel(this.interaction.client, id);
         if (trafficChannel) {
           if (trafficChannel.id === this.channelToOpenPortalOn.id) {
-            this.interaction.reply(PORTAL_CONNECT_TRAFFIC);
+            this.errReply(PORTAL_CONNECT_TRAFFIC);
             return false;
           }
           this.trafficChannel = trafficChannel;
@@ -131,7 +133,7 @@ export class ConnectValidator {
       throw new Error(SELF_NO_TRAFFIC_CHANNEL);
     } catch (e: any) {
       console.error(e);
-      this.interaction.reply(SELF_NO_TRAFFIC_CHANNEL);
+      this.errReply(SELF_NO_TRAFFIC_CHANNEL);
       return false;
     }
   }
@@ -140,11 +142,12 @@ export class ConnectValidator {
     this.server = await getServerById(this.interaction.guildId);
     this.invitedServer = await getServerById(this.invitedGuildId);
     if (!this.server) {
-      this.interaction.reply(SELF_SERVER_NOT_SETUP);
+      this.errReply(SELF_SERVER_NOT_SETUP);
       return false;
     }
     if (!this.invitedServer) {
-      this.interaction.reply(OTHER_SERVER_NOT_SETUP);
+      this.errReply(OTHER_SERVER_NOT_SETUP);
+
       return false;
     }
     return true;
@@ -162,7 +165,8 @@ export class ConnectValidator {
       }
       return true;
     } catch (e) {
-      this.interaction.reply(OTHER_SERVER_NOT_SETUP);
+      this.errReply(OTHER_SERVER_NOT_SETUP);
+
       return false;
     }
   }
@@ -171,7 +175,8 @@ export class ConnectValidator {
     const trafficChannelId = (this.invitedServer as IServerDocument)
       .trafficChannelId;
     if (!trafficChannelId) {
-      this.interaction.reply(OTHER_SERVER_NOT_SETUP);
+      this.errReply(OTHER_SERVER_NOT_SETUP);
+
       return false;
     }
     this.invitedGuildTrafficChannel = getTextChannel(
@@ -179,7 +184,7 @@ export class ConnectValidator {
       trafficChannelId
     );
     if (!this.invitedGuildTrafficChannel) {
-      this.interaction.reply(OTHER_SERVER_NOT_SETUP);
+      this.errReply(OTHER_SERVER_NOT_SETUP);
       return false;
     }
     return true;
@@ -195,7 +200,8 @@ export class ConnectValidator {
       this.channelToOpenPortalOn.id
     );
     if (!portal) {
-      this.interaction.reply(PORTAL_CREATE_UNKNOWN_ERROR);
+      this.errReply(PORTAL_CREATE_UNKNOWN_ERROR);
+
       return null;
     }
 
@@ -210,7 +216,7 @@ export class ConnectValidator {
     );
 
     if (!this.portal) {
-      this.interaction.reply(PORTAL_CREATE_UNKNOWN_ERROR);
+      this.errReply(PORTAL_CREATE_UNKNOWN_ERROR);
       return false;
     }
     await this.portal.addServerRequest(
@@ -221,4 +227,16 @@ export class ConnectValidator {
 
     return true;
   }
+
+  private errReply = (msg: string) => {
+    this.interaction.reply({
+      embeds: [
+        failedMessageEmbed(
+          this.interaction.client,
+          this.interaction.member as GuildMember,
+          msg
+        ),
+      ],
+    });
+  };
 }

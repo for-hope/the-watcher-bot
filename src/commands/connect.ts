@@ -2,10 +2,16 @@ import { SlashCommandBuilder } from "@discordjs/builders";
 
 import { PortalRequest } from "../db/portalClient";
 
-import { CONNECTION_REQUEST_SENT } from "../utils/bot_embeds";
+import { CONNECTION_REQUEST_SENT, infoMessageEmbed } from "../utils/bot_embeds";
 import { PORTAL_REQUEST_SENT } from "../utils/bot_messages";
 
-import { CommandInteraction, Guild, TextChannel } from "discord.js";
+import {
+  CommandInteraction,
+  Guild,
+  GuildMember,
+  TextChannel,
+  User,
+} from "discord.js";
 import { ChannelType } from "discord-api-types/payloads/v9";
 
 import { ConnectValidator } from "../validators/connectValidator";
@@ -51,11 +57,20 @@ module.exports = {
         ),
       ],
     });
-    console.log("inviting server...")
+    console.log("inviting server...");
     await connectCommand.inviteServer(connectionRequestStatusMessage.id);
 
-    await interaction.reply(
-      PORTAL_REQUEST_SENT(connectCommand.invitedGuild as Guild, trafficChannel)
-    );
+    await interaction.reply({
+      embeds: [
+        infoMessageEmbed(
+          interaction.client,
+          interaction.member.user as User,
+          PORTAL_REQUEST_SENT(
+            connectCommand.invitedGuild as Guild,
+            trafficChannel
+          )
+        ),
+      ],
+    });
   },
 };
