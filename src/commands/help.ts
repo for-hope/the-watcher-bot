@@ -1,6 +1,7 @@
 import { CommandInteraction } from "discord.js";
 
 import { SlashCommandBuilder } from "@discordjs/builders";
+import { commandHelpEmbed } from "../utils/bot_embeds";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -14,10 +15,10 @@ module.exports = {
         .setDescription(
           "The name of the command you want to get more information about."
         )
-        .setRequired(true)
+        .setRequired(false)
     ),
   async execute(interaction: CommandInteraction) {
     const command = interaction.options.getString("command");
-    interaction.reply(`soon`);
+    interaction.reply({ embeds: [commandHelpEmbed(interaction.client)] });
   },
 };
