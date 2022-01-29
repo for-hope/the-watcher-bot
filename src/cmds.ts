@@ -70,7 +70,27 @@ const setupCmd: IBotCommand = {
   ],
 };
 
+const membersCmd: IBotCommand = {
+  name: "members",
+  usage: "members [channel]",
+  aliases: ["members"],
+  description: "List all the members in a channel.",
+  longDescription:
+    "This command will list all the members in a channel.\n\n" +
+    "If you specify a channel, it will list all the members in that channel.\n" +
+    "If you don't specify a channel, it will list all the members in the current channel.",
+  args: [
+    {
+      name: "channel",
+      description: "The channel you want to list the members of.",
+      type: "string",
+      required: false,
+    },
+  ],
+};
+
 export const botCommands: Map<string, IBotCommand>[] = [
   new Map([[connectCmd.name, connectCmd]]),
   new Map([[setupCmd.name, setupCmd]]),
+  new Map([[membersCmd.name, membersCmd]]),
 ];
