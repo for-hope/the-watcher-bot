@@ -85,14 +85,15 @@ export const isBlacklistedFromPortal = async (
   message: Message,
   originChannelId: string
 ): Promise<boolean> => {
-  const portal = await Portal.findOne({
-    where: { originChannelId },
-  });
+  console.log("X" + originChannelId);
+  //find portal whereo originchannelid
+  const portal = await Portal.findOne({ originChannelId });
   if (!portal) return false;
   if (
     portal.isMemberBlacklisted(message.member?.id as string) ||
     portal.isServerBlacklisted(message?.guildId as string) ||
-    portal.isServerMuted(message?.guildId as string)
+    portal.isServerMuted(message?.guildId as string) ||
+    portal.isServerLeft(message?.guildId as string)
   ) {
     return true;
   }

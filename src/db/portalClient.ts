@@ -77,6 +77,7 @@ export interface IPortalDocument extends IPortal, Document {
   isMemberBlacklisted: (userId: string) => boolean;
   isServerBlacklisted: (serverId: string) => boolean;
   isServerMuted: (serverId: string) => boolean;
+  isServerLeft: (serverId: string) => boolean;
 }
 
 export interface IPortalModel extends Model<IPortalDocument> {
@@ -225,6 +226,15 @@ portalSchema.methods.isServerMuted = function (serverId: string) {
   return false;
 };
 
+portalSchema.methods.isServerLeft = function (serverId: string) {
+  const portal = this;
+  const server = portal.servers.find((server) => server.server_id === serverId);
+  if (server) {
+    return server.server_status === PortalRequest.left;
+  }
+  return false;
+};
+
 //TODO handle too many requests / limits
 portalSchema.statics.requestMessages = async function () {
   const requestMessages: Array<{
@@ -267,7 +277,10 @@ export const getChannelIdsOnPortal = async (
     if (!portal) {
       return [];
     }
-    const channels = portal.servers.map((server) => server.channel_id);
+
+    const channels = portal.servers
+      .filter((server) => server.server_status === PortalRequest.approved)
+      .map((server) => server.channel_id);
 
     return channels;
   } catch (err) {

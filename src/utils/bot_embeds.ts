@@ -7,6 +7,7 @@ import {
   ClientUser,
   Client,
   User,
+  GuildChannel,
 } from "discord.js";
 import { PortalRequestEmojis } from "./decoration";
 
@@ -130,7 +131,11 @@ export const infoMessageEmbed = (
   );
 };
 
-export const portalServerMembersEmbed = (client: Client,servers: Guild[], channelName: string): MessageEmbed => {
+export const portalServerMembersEmbed = (
+  client: Client,
+  servers: Guild[],
+  channelName: string
+): MessageEmbed => {
   return new MessageEmbed()
     .setColor(0x0099ff)
     .setAuthor(
@@ -141,7 +146,9 @@ export const portalServerMembersEmbed = (client: Client,servers: Guild[], channe
       `**${servers.length} Servers**\n\n` +
         servers
           .map((server, index) => {
-            return `${index+1} - **${server.name}**\`${server.id}\`\n${server.memberCount} members`;
+            return `${index + 1} - **${server.name}**\`${server.id}\`\n${
+              server.memberCount
+            } members`;
           })
           .join("\n")
     )
@@ -149,5 +156,32 @@ export const portalServerMembersEmbed = (client: Client,servers: Guild[], channe
     .setFooter(
       "thewatcher.xyz",
       client.user?.avatarURL() || client.user?.defaultAvatarURL
+    );
+};
+
+export const leftPortalEmbed = (
+  interaction: CommandInteraction
+): MessageEmbed => {
+  const member = interaction.member as GuildMember;
+  const guild = interaction.guild as Guild;
+  const channel = interaction.channel as GuildChannel;
+  const clientUser = guild.client.user as ClientUser;
+
+  return new MessageEmbed()
+    .setColor(0x0099ff)
+    .setAuthor(
+      `${member.user.tag}`,
+      member.user.avatarURL() || member.user.defaultAvatarURL
+    )
+    .setTitle(`Left Portal`)
+    .setDescription(
+      `📩 You have successfully left the portal in 
+       **${channel.name}**\`${channel.id}\`\n`
+    )
+    .setTimestamp()
+    .setThumbnail(guild.iconURL() as string)
+    .setFooter(
+      `${clientUser.tag}`,
+      clientUser.avatarURL() || clientUser.defaultAvatarURL
     );
 };
