@@ -129,3 +129,25 @@ export const infoMessageEmbed = (
       )
   );
 };
+
+export const portalServerMembersEmbed = (client: Client,servers: Guild[], channelName: string): MessageEmbed => {
+  return new MessageEmbed()
+    .setColor(0x0099ff)
+    .setAuthor(
+      `Server Members in "${channelName}"`,
+      client.user?.avatarURL() || client.user?.defaultAvatarURL
+    )
+    .setDescription(
+      `**${servers.length} Servers**\n\n` +
+        servers
+          .map((server, index) => {
+            return `${index+1} - **${server.name}**\`${server.id}\`\n${server.memberCount} members`;
+          })
+          .join("\n")
+    )
+    .setTimestamp()
+    .setFooter(
+      "thewatcher.xyz",
+      client.user?.avatarURL() || client.user?.defaultAvatarURL
+    );
+};
