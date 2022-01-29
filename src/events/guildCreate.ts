@@ -1,12 +1,11 @@
 import { newServer } from "../db/serversClient";
-import { BaseGuildTextChannel, Guild, GuildMember } from "discord.js";
+import { BaseGuildTextChannel, Guild, GuildMember, User } from "discord.js";
+import { infoMessageEmbed } from "../utils/bot_embeds";
+import { WELCOME_MESSAGE } from "../utils/bot_messages";
 
 const dmOwnerOrServer = async (guild: Guild) => {
   const owner = await guild.fetchOwner();
-  const msg =
-    "Hello, I am the **The Watcher Bot**. I am here to help you setup your server for interserver communications.\n\n" +
-    "To setup your server, use the command `!setup` in any channel.\n\n" +
-    "You can also use `!help` to see all the commands available to you.";
+  const msg = WELCOME_MESSAGE;
   if (owner) {
     const dmChannel = await owner.createDM();
     await dmChannel.send(msg).catch(async () => {
@@ -19,7 +18,11 @@ const dmOwnerOrServer = async (guild: Guild) => {
           c.permissionsFor(guild.me as GuildMember).has("SEND_MESSAGES")
       ) as BaseGuildTextChannel;
       if (botChannel) {
-        await botChannel.send(msg);
+        await botChannel.send({
+          embeds: [
+            infoMessageEmbed(guild.client, guild.client.user as User, msg),
+          ],
+        });
       }
     });
   }

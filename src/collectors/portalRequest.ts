@@ -1,9 +1,12 @@
 import {
   ButtonInteraction,
   CategoryChannel,
+  Client,
   Guild,
+  GuildMember,
   GuildTextBasedChannel,
   Message,
+  User,
 } from "discord.js";
 
 import { portalByServersChannelId, PortalRequest } from "../db/portalClient";
@@ -17,6 +20,7 @@ import {
 import { PortalResponses } from "../types/portal";
 
 import { updateRequestStatusMessage } from "../services/portalService";
+import { infoMessageEmbed } from "../utils/bot_embeds";
 
 export const portalRequestCollector = (
   message: Message,
@@ -67,14 +71,19 @@ export const portalRequestCollector = (
       );
 
       updatedPortal.validChannelIds().forEach(async (channelId) => {
-        console.log(channelId);
         const channelById = getTextChannel(i.client, channelId);
         if (!channelById) {
           return;
         }
-        await channelById.send(
-          `:white_check_mark: **${i.user.tag}** from **${guild.name}** approved the portal request! You may now use this channel to communicate between servers.`
-        );
+        await channelById.send({
+          embeds: [
+            infoMessageEmbed(
+              i.client as Client,
+              i.client.user as User,
+              `:white_check_mark: **${i.user.tag}** from **${guild.name}** approved the portal request! You may now use this channel to communicate between servers.`
+            ),
+          ],
+        });
       });
 
       await i.update({

@@ -6,6 +6,7 @@ import {
   GuildMember,
   GuildTextBasedChannel,
   Role,
+  User,
 } from "discord.js";
 import { setupServer } from "../db/serversClient";
 import { hasManagerPermission } from "../utils/permissions";
@@ -14,6 +15,7 @@ import {
   getOrCreateBotCategory,
   overwritePortalPermissions,
 } from "../utils/bot_utils";
+import { infoMessageEmbed } from "../utils/bot_embeds";
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("setup")
@@ -94,9 +96,15 @@ module.exports = {
     }
 
     //send a message to the traffic channel
-    await trafficChannel.send(
-      TRAFFIC_CHANNEL_SETUP(interaction.member as GuildMember, adminRole)
-    );
+    await trafficChannel.send({
+      embeds: [
+        infoMessageEmbed(
+          interaction.client,
+          interaction.member.user as User,
+          TRAFFIC_CHANNEL_SETUP(interaction.member as GuildMember, adminRole)
+        ),
+      ],
+    });
 
     await setupServer(
       guild.id,
@@ -106,6 +114,14 @@ module.exports = {
       false
     );
 
-    await interaction.reply(BOT_SETUP_REPLY(trafficChannel));
+    await interaction.reply({
+      embeds: [
+        infoMessageEmbed(
+          interaction.client,
+          interaction.member.user as User,
+          BOT_SETUP_REPLY(trafficChannel)
+        ),
+      ],
+    });
   },
 };

@@ -6,6 +6,7 @@ import {
   Guild,
   ClientUser,
   Client,
+  User,
 } from "discord.js";
 import { PortalRequestEmojis } from "./decoration";
 
@@ -80,10 +81,51 @@ export const commandHelpEmbed = (client: Client) => {
       },
       {
         name: ":test_tube: Experimental",
-        value:
-        `\`/teleport\`\n\n\n\n**Need More Help?**\nVisit the bot's website [here](https://thewatcher.xyz) or Join the [Support Server](https://discord.gg/) for more help.\n\n**<@${client.user?.id}> is controlled by users with Manage Server permissions.**`,
+        value: `\`/teleport\`\n\n\n\n**Need More Help?**\nVisit the bot's website [here](https://thewatcher.xyz) or Join the [Support Server](https://discord.gg/) for more help.\n\n**<@${client.user?.id}> is controlled by users with Manage Server permissions.**`,
       }
     )
     .setFooter("thewatcher.xyz", client.user?.avatarURL() || "")
     .setTimestamp();
+};
+export const failedMessageEmbed = (
+  client: Client,
+  member: GuildMember,
+  failedMessage: string
+) => {
+  return (
+    new MessageEmbed()
+      //set color error
+      .setAuthor(
+        member.user.tag,
+        member.user.avatarURL() || member.user.defaultAvatarURL
+      )
+
+      .setColor(0xff555f)
+      .setDescription(failedMessage)
+      .setTimestamp()
+      .setFooter(
+        client.user?.tag as string,
+        client?.user?.avatarURL() as string
+      )
+  );
+};
+
+export const infoMessageEmbed = (
+  client: Client,
+  member: User,
+  infoMessage: string
+) => {
+  return (
+    new MessageEmbed()
+      //set color error
+      .setAuthor(member.tag, member.avatarURL() || member.defaultAvatarURL)
+
+      .setColor(0x0099ff)
+      .setDescription(infoMessage)
+      .setTimestamp()
+      .setFooter(
+        client.user?.tag as string,
+        client?.user?.avatarURL() as string
+      )
+  );
 };
