@@ -50,6 +50,43 @@ export const CONNECTION_REQUEST_SENT = (
     );
 };
 
+export const commandHelpEmbed = (client: Client) => {
+  return new MessageEmbed()
+    .setColor(0x0099ff)
+
+    .setAuthor(
+      "TheWatcher Command Help",
+      client.user?.avatarURL() || client.user?.defaultAvatarURL || "",
+      "https://thewatcher.xyz"
+    )
+    .setDescription(
+      `Use the Slash Command \`/help [command name]\` to get more command information on a specific command.`
+    )
+    .setFields(
+      {
+        name: ":cyclone: Inter-server communications",
+        value: "`/setup` `/connect` `/leave` `/members`",
+      },
+      {
+        name: ":tools: Portal Moderation",
+        value: "`/ban` `/hardban` `/mute` `/unmute` `/purge` `/permissions`\n",
+      },
+      {
+        name: ":information_source: Information",
+        value: "`/help` `/info` `/ping` `/serverinfo`\n",
+      },
+      {
+        name: ":tada: Fun",
+        value: "`/8ball` `/coinflip` `/roll` `/choose`",
+      },
+      {
+        name: ":test_tube: Experimental",
+        value: `\`/teleport\`\n\n\n\n**Need More Help?**\nVisit the bot's website [here](https://thewatcher.xyz) or Join the [Support Server](https://discord.gg/) for more help.\n\n**<@${client.user?.id}> is controlled by users with Manage Server permissions.**`,
+      }
+    )
+    .setFooter("thewatcher.xyz", client.user?.avatarURL() || "")
+    .setTimestamp();
+};
 export const failedMessageEmbed = (
   client: Client,
   member: GuildMember,
