@@ -8,6 +8,7 @@ import {
   Client,
   User,
   GuildChannel,
+  TextChannel,
 } from "discord.js";
 import { PortalRequestEmojis } from "./decoration";
 import { botCommands } from "../cmds";
@@ -135,8 +136,16 @@ export const infoMessageEmbed = (
 export const portalServerMembersEmbed = (
   client: Client,
   servers: Guild[],
+  mutedServers: string[],
+  ownerServerId: string,
   channelName: string
 ): MessageEmbed => {
+  const textStatus = (serverId: string) => {
+    return mutedServers.includes(serverId)
+      ? `:no_entry: muted`
+      : serverId === ownerServerId ? `:star: owner` 
+      : `:white_check_mark:`;
+  };
   return new MessageEmbed()
     .setColor(0x0099ff)
     .setAuthor(
@@ -147,7 +156,7 @@ export const portalServerMembersEmbed = (
       `**${servers.length} Servers**\n\n` +
         servers
           .map((server, index) => {
-            return `${index + 1} - **${server.name}**\`${server.id}\`\n${
+            return `${index + 1} - **${server.name}**\`${server.id}\` - ${textStatus(server.id)} \n${
               server.memberCount
             } members`;
           })
@@ -196,7 +205,14 @@ export const commandEmbed = (
     return new MessageEmbed().setColor(0xff0000).setTitle(`Command not found`);
   }
 
-  const argsString = commandInfo.args.map((arg) => `\`${arg.name}\` - ${arg.description} - ${arg.required? "Required" : "Optional"}`).join(`\n`);
+  const argsString = commandInfo.args
+    .map(
+      (arg) =>
+        `\`${arg.name}\` - ${arg.description} - ${
+          arg.required ? "Required" : "Optional"
+        }`
+    )
+    .join(`\n`);
 
   return new MessageEmbed()
     .setColor(0x0099ff)
@@ -212,5 +228,62 @@ export const commandEmbed = (
       "Usage Syntax: <required> [optional]",
       client.user?.avatarURL() || client.user?.defaultAvatarURL
     );
+};
 
+export const mutedServerEmbed = (
+  interaction: CommandInteraction,
+  duration: number,
+  server: Guild,
+  portalChannel: string
+): MessageEmbed => {
+  const member = interaction.member as GuildMember;
+  const clientUser = interaction.client.user as ClientUser;
+
+  return new MessageEmbed()
+    .setColor(0x0099ff)
+    .setAuthor(
+      `${member.user.tag}`,
+      member.user.avatarURL() || member.user.defaultAvatarURL
+    )
+    .setTitle(`Muted`)
+    .setDescription(
+      `📩 You have been muted in ${portalChannel} by **${
+        server.name
+      }**\`${server.id}\`\n
+      **Duration:** ${duration} minutes`
+    )
+    .setTimestamp()
+    .setFooter(
+      `${clientUser.tag}`,
+      clientUser.avatarURL() || clientUser.defaultAvatarURL
+    );
+};
+
+export const successfullyMutedEmbed = (
+  interaction: CommandInteraction,
+  duration: number,
+  server_id: string,
+  portalChannel: TextChannel
+): MessageEmbed => {
+  const member = interaction.member as GuildMember;
+  const clientUser = interaction.client.user as ClientUser;
+
+  return (
+    new MessageEmbed()
+      //red
+      .setColor(0xff1a1a)
+      .setAuthor(
+        `${member.user.tag}`,
+        member.user.avatarURL() || member.user.defaultAvatarURL
+      )
+      .setTitle(`Muted`)
+      .setDescription(
+        `📩 You have successfully muted \`${server_id}\` in ${portalChannel.toString()} for ${duration} minutes`
+      )
+      .setTimestamp()
+      .setFooter(
+        `${clientUser.tag}`,
+        clientUser.avatarURL() || clientUser.defaultAvatarURL
+      )
+  );
 };

@@ -16,8 +16,9 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction: CommandInteraction) {
-  const guild = interaction.guild as Guild;
-  const channel = interaction.channel as TextChannel;
+  //get channel from options
+  const channel = (interaction.options.getChannel("channel") ||
+    interaction.channel) as TextChannel;
   const portalChannel = await portalByServersChannelId(channel.id);
   if (!portalChannel) {
     interaction.reply("You must be in a portal channel to use this command!");
@@ -26,6 +27,10 @@ export async function execute(interaction: CommandInteraction) {
 
   const servers = portalChannel.servers;
   const serverIds = servers.map((server) => server.server_id);
+  const mutedServerIds = serverIds.filter((serverId) =>
+    portalChannel.isServerMuted(serverId)
+  );
+  const ownerServer = portalChannel.originServerId;
   const guildsById = serverIds.map((serverId) =>
     interaction.client.guilds.cache.get(serverId)
   );
@@ -37,10 +42,12 @@ export async function execute(interaction: CommandInteraction) {
   const embedReply = portalServerMembersEmbed(
     interaction.client,
     nonNullGuilds,
+    mutedServerIds,
+    ownerServer,
     channel.name
   );
 
-  interaction.reply({ embeds: [embedReply] });
+  interaction.reply({ embeds: [embedReply], ephemeral: true });
 
   //get list of guilds in the portal
 }

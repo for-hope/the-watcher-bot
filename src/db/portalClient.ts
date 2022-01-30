@@ -48,7 +48,7 @@ export enum PortalRequest {
   left = "Left",
   banned = "Banned",
   canceled = "Canceled",
-  unkown = "Unknown",
+  unknown = "Unknown",
 }
 
 export interface IPortalDocument extends IPortal, Document {
@@ -78,6 +78,8 @@ export interface IPortalDocument extends IPortal, Document {
   isServerBlacklisted: (serverId: string) => boolean;
   isServerMuted: (serverId: string) => boolean;
   isServerLeft: (serverId: string) => boolean;
+  banServer: (serverId: string) => Promise<IPortalDocument>;
+  muteServer: (serverId: string, duration: number) => Promise<IPortalDocument>;
 }
 
 export interface IPortalModel extends Model<IPortalDocument> {
@@ -114,6 +116,29 @@ const portalSchema = new mongoose.Schema<IPortalDocument>({
 
 portalSchema.methods.myServer = function (serverId: string) {
   return this.servers.find((server) => server.server_id === serverId);
+};
+
+portalSchema.methods.banServer = async function (serverId: string) {
+  const portal = this;
+  portal.bannedServers.push(serverId);
+  await portal.save();
+  return portal;
+};
+
+portalSchema.methods.muteServer = async function (
+  serverId: string,
+  duration: number
+) {
+  const portal = this;
+  const server = portal.myServer(serverId);
+  if (server) {
+    server.muted = {
+      mutedOn: Date.now(),
+      duration,
+    };
+    await portal.save();
+  }
+  return portal;
 };
 
 portalSchema.methods.updateServerStatus = async function (
@@ -221,7 +246,8 @@ portalSchema.methods.isServerMuted = function (serverId: string) {
   if (server) {
     const muted = server.muted;
     if (!muted) return false;
-    return muted.mutedOn + muted.duration > Date.now();
+    const isMuted = muted.mutedOn + muted.duration > Date.now();
+    return isMuted;
   }
   return false;
 };
