@@ -89,8 +89,28 @@ const membersCmd: IBotCommand = {
   ],
 };
 
-export const botCommands: Map<string, IBotCommand>[] = [
-  new Map([[connectCmd.name, connectCmd]]),
-  new Map([[setupCmd.name, setupCmd]]),
-  new Map([[membersCmd.name, membersCmd]]),
-];
+
+const leaveCmd = {
+  name: "leave",
+  usage: "leave",
+  aliases: ["leave"],
+  description: "Leave the current portal.",
+  longDescription:
+    "This command will leave the current portal in a specific channel.\n\n" +
+    "You can use this command in a portal channel to leave the  portal.\n",
+  args : [{
+    name: "channel",
+    description: "The channel you want to leave the portal in. if empty it will leave the current channel.",
+    type: "string",
+    required: false,
+  }],
+
+};
+
+
+export const botCommands: Map<string, IBotCommand> = new Map([
+  ["connect", connectCmd],
+  ["setup", setupCmd],
+  ["members", membersCmd],
+  ["leave", leaveCmd],
+]);

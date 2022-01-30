@@ -10,6 +10,7 @@ import {
   GuildChannel,
 } from "discord.js";
 import { PortalRequestEmojis } from "./decoration";
+import { botCommands } from "../cmds";
 
 export const CONNECTION_REQUEST_STATUS = (portalRequest: PortalRequest) => {
   const portalRequestString = portalRequest
@@ -184,4 +185,32 @@ export const leftPortalEmbed = (
       `${clientUser.tag}`,
       clientUser.avatarURL() || clientUser.defaultAvatarURL
     );
+};
+
+export const commandEmbed = (
+  client: Client,
+  commandName: string
+): MessageEmbed => {
+  const commandInfo = botCommands.get(commandName);
+  if (!commandInfo) {
+    return new MessageEmbed().setColor(0xff0000).setTitle(`Command not found`);
+  }
+
+  const argsString = commandInfo.args.map((arg) => `\`${arg.name}\` - ${arg.description} - ${arg.required? "Required" : "Optional"}`).join(`\n`);
+
+  return new MessageEmbed()
+    .setColor(0x0099ff)
+    .setTitle(`\`/${commandName}\` (Slash Command)`)
+    .setDescription(
+      `${commandInfo.description}\n\n**Usage:** \`${commandInfo.usage}\`
+      \n**Aliases:** \`${commandInfo.aliases.join(", ")}\`
+      \n**Long Description:** ${commandInfo.longDescription}
+      \n**Args:**\n ${argsString}`
+    )
+    .setTimestamp()
+    .setFooter(
+      "Usage Syntax: <required> [optional]",
+      client.user?.avatarURL() || client.user?.defaultAvatarURL
+    );
+
 };
