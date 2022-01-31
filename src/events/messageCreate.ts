@@ -34,7 +34,9 @@ module.exports = {
           message,
           originChannelId
         );
-        if (blacklisted) return;
+        if (blacklisted) {
+          return;
+        };
 
         await forwardMessageIfIncluded(ids, message);
       }
