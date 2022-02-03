@@ -80,6 +80,7 @@ export interface IPortalDocument extends IPortal, Document {
   isServerLeft: (serverId: string) => boolean;
   banServer: (serverId: string) => Promise<IPortalDocument>;
   muteServer: (serverId: string, duration: number) => Promise<IPortalDocument>;
+  unmuteServer: (serverId: string) => Promise<IPortalDocument>;
 }
 
 export interface IPortalModel extends Model<IPortalDocument> {
@@ -140,6 +141,17 @@ portalSchema.methods.muteServer = async function (
   }
   return portal;
 };
+
+portalSchema.methods.unmuteServer = async function (serverId: string) {
+  const portal = this;
+  const server = portal.myServer(serverId);
+  if (server) {
+    server.muted = undefined;
+    await portal.save();
+  }
+  return portal;
+};
+
 
 portalSchema.methods.updateServerStatus = async function (
   serverId: string,

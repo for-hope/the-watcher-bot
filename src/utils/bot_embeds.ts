@@ -143,7 +143,8 @@ export const portalServerMembersEmbed = (
   const textStatus = (serverId: string) => {
     return mutedServers.includes(serverId)
       ? `:no_entry: muted`
-      : serverId === ownerServerId ? `:star: owner` 
+      : serverId === ownerServerId
+      ? `:star: owner`
       : `:white_check_mark:`;
   };
   return new MessageEmbed()
@@ -156,9 +157,9 @@ export const portalServerMembersEmbed = (
       `**${servers.length} Servers**\n\n` +
         servers
           .map((server, index) => {
-            return `${index + 1} - **${server.name}**\`${server.id}\` - ${textStatus(server.id)} \n${
-              server.memberCount
-            } members`;
+            return `${index + 1} - **${server.name}**\`${
+              server.id
+            }\` - ${textStatus(server.id)} \n${server.memberCount} members`;
           })
           .join("\n")
     )
@@ -239,18 +240,45 @@ export const mutedServerEmbed = (
   const member = interaction.member as GuildMember;
   const clientUser = interaction.client.user as ClientUser;
 
+  return (
+    new MessageEmbed()
+      //red
+      .setColor(0xff3300)
+      .setAuthor(
+        `${member.user.tag}`,
+        member.user.avatarURL() || member.user.defaultAvatarURL
+      )
+      .setTitle(`Muted`)
+      .setDescription(
+        `📩 You have been muted in ${portalChannel} by **${server.name}**\`${server.id}\`\n
+      **Duration:** ${duration} minutes`
+      )
+      .setTimestamp()
+      .setFooter(
+        `${clientUser.tag}`,
+        clientUser.avatarURL() || clientUser.defaultAvatarURL
+      )
+  );
+};
+
+export const unmutedServerEmbed = (
+  interaction: CommandInteraction,
+  server: Guild,
+  portalChannel: string
+): MessageEmbed => {
+  const member = interaction.member as GuildMember;
+  const clientUser = interaction.client.user as ClientUser;
+
   return new MessageEmbed()
-    .setColor(0x0099ff)
+  //green
+    .setColor(0x00ff33)
     .setAuthor(
       `${member.user.tag}`,
       member.user.avatarURL() || member.user.defaultAvatarURL
     )
-    .setTitle(`Muted`)
+    .setTitle(`Unmuted`)
     .setDescription(
-      `📩 You have been muted in ${portalChannel} by **${
-        server.name
-      }**\`${server.id}\`\n
-      **Duration:** ${duration} minutes`
+      `📩 You have been unmuted in ${portalChannel} by **${server.name}**\`${server.id}\`\n`
     )
     .setTimestamp()
     .setFooter(
@@ -270,8 +298,8 @@ export const successfullyMutedEmbed = (
 
   return (
     new MessageEmbed()
-      //red
-      .setColor(0xff1a1a)
+      //blue
+      .setColor(0x0099ff)
       .setAuthor(
         `${member.user.tag}`,
         member.user.avatarURL() || member.user.defaultAvatarURL
@@ -279,6 +307,35 @@ export const successfullyMutedEmbed = (
       .setTitle(`Muted`)
       .setDescription(
         `📩 You have successfully muted \`${server_id}\` in ${portalChannel.toString()} for ${duration} minutes`
+      )
+      .setTimestamp()
+      .setFooter(
+        `${clientUser.tag}`,
+        clientUser.avatarURL() || clientUser.defaultAvatarURL
+      )
+  );
+};
+
+
+export const successfullyUnmutedEmbed = (
+  interaction: CommandInteraction,
+  server_id: string,
+  portalChannel: TextChannel
+): MessageEmbed => {
+  const member = interaction.member as GuildMember;
+  const clientUser = interaction.client.user as ClientUser;
+
+  return (
+    new MessageEmbed()
+      //blue
+      .setColor(0x0099ff)
+      .setAuthor(
+        `${member.user.tag}`,
+        member.user.avatarURL() || member.user.defaultAvatarURL
+      )
+      .setTitle(`Muted`)
+      .setDescription(
+        `📩 You have successfully unmuted \`${server_id}\` in ${portalChannel.toString()}`
       )
       .setTimestamp()
       .setFooter(

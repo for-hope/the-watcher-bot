@@ -85,7 +85,7 @@ export const isBlacklistedFromPortal = async (
   message: Message,
   originChannelId: string
 ): Promise<boolean> => {
-  console.log("X" + originChannelId);
+
   //find portal whereo originchannelid
   const portal = await Portal.findOne({ originChannelId });
   if (!portal) return false;
