@@ -73,7 +73,8 @@ export const commandHelpEmbed = (client: Client) => {
       },
       {
         name: ":tools: Portal Moderation",
-        value: "`/ban` `/hardban` `/mute` `/unmute` `/purge` `/permissions`\n",
+        value:
+          "`/ban` `/unban` `/hardban` `banlist` `/mute` `/unmute` `/purge` `/permissions`\n",
       },
       {
         name: ":information_source: Information",
