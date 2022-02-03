@@ -12,6 +12,7 @@ import {
 } from "discord.js";
 import { PortalRequestEmojis } from "./decoration";
 import { botCommands } from "../cmds";
+import ms from "ms";
 
 export const CONNECTION_REQUEST_STATUS = (portalRequest: PortalRequest) => {
   const portalRequestString = portalRequest
@@ -233,7 +234,7 @@ export const commandEmbed = (
 
 export const mutedServerEmbed = (
   interaction: CommandInteraction,
-  duration: number,
+  duration: number, //in MS
   server: Guild,
   portalChannel: string
 ): MessageEmbed => {
@@ -251,7 +252,7 @@ export const mutedServerEmbed = (
       .setTitle(`Muted`)
       .setDescription(
         `📩 You have been muted in ${portalChannel} by **${server.name}**\`${server.id}\`\n
-      **Duration:** ${duration} minutes`
+      **Duration:** ${ms(duration, { long: true }) }`
       )
       .setTimestamp()
       .setFooter(
@@ -269,27 +270,29 @@ export const unmutedServerEmbed = (
   const member = interaction.member as GuildMember;
   const clientUser = interaction.client.user as ClientUser;
 
-  return new MessageEmbed()
-  //green
-    .setColor(0x00ff33)
-    .setAuthor(
-      `${member.user.tag}`,
-      member.user.avatarURL() || member.user.defaultAvatarURL
-    )
-    .setTitle(`Unmuted`)
-    .setDescription(
-      `📩 You have been unmuted in ${portalChannel} by **${server.name}**\`${server.id}\`\n`
-    )
-    .setTimestamp()
-    .setFooter(
-      `${clientUser.tag}`,
-      clientUser.avatarURL() || clientUser.defaultAvatarURL
-    );
+  return (
+    new MessageEmbed()
+      //green
+      .setColor(0x00ff33)
+      .setAuthor(
+        `${member.user.tag}`,
+        member.user.avatarURL() || member.user.defaultAvatarURL
+      )
+      .setTitle(`Unmuted`)
+      .setDescription(
+        `📩 You have been unmuted in ${portalChannel} by **${server.name}**\`${server.id}\`\n`
+      )
+      .setTimestamp()
+      .setFooter(
+        `${clientUser.tag}`,
+        clientUser.avatarURL() || clientUser.defaultAvatarURL
+      )
+  );
 };
 
 export const successfullyMutedEmbed = (
   interaction: CommandInteraction,
-  duration: number,
+  duration: number, //in MS
   server_id: string,
   portalChannel: TextChannel
 ): MessageEmbed => {
@@ -306,7 +309,10 @@ export const successfullyMutedEmbed = (
       )
       .setTitle(`Muted`)
       .setDescription(
-        `📩 You have successfully muted \`${server_id}\` in ${portalChannel.toString()} for ${duration} minutes`
+        `📩 You have successfully muted \`${server_id}\` in ${portalChannel.toString()} for ${ms(
+          duration,
+          { long: true }
+        )}`
       )
       .setTimestamp()
       .setFooter(
@@ -315,7 +321,6 @@ export const successfullyMutedEmbed = (
       )
   );
 };
-
 
 export const successfullyUnmutedEmbed = (
   interaction: CommandInteraction,
