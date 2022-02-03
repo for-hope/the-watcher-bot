@@ -38,6 +38,7 @@ export interface IPortal {
       };
     }
   ];
+  //string
   bannedServers: [string];
   bannedUsers: [string];
 }
@@ -113,6 +114,8 @@ const portalSchema = new mongoose.Schema<IPortalDocument>({
   originServerId: { type: String, required: true, unique: false },
   originChannelId: { type: String, required: true, unique: true },
   openInvitation: { type: Boolean, default: true }, //other servers can invite other servers to this portal
+  bannedServers: [typeof String],
+  bannedUsers: [typeof String],
 });
 
 portalSchema.methods.myServer = function (serverId: string) {
@@ -151,7 +154,6 @@ portalSchema.methods.unmuteServer = async function (serverId: string) {
   }
   return portal;
 };
-
 
 portalSchema.methods.updateServerStatus = async function (
   serverId: string,
@@ -420,6 +422,8 @@ export const createServerOnPortal = async (
           server_status: PortalRequest.approved,
         },
       ],
+      bannedUsers: [],
+      bannedServers: [],
     });
 
     await portal.save();

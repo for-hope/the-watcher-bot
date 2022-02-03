@@ -232,6 +232,31 @@ export const commandEmbed = (
     );
 };
 
+export const bannedServerEmbed = (
+  interaction: CommandInteraction,
+  server: Guild,
+  portalChannel: string
+): MessageEmbed => {
+  const member = interaction.member as GuildMember;
+  const clientUser = interaction.client.user as ClientUser;
+
+  return new MessageEmbed()
+    .setColor(0xff3300)
+    .setAuthor(
+      `${member.user.tag}`,
+      member.user.avatarURL() || member.user.defaultAvatarURL
+    )
+    .setTitle(`:hammer: Banned`)
+    .setDescription(
+      `:hammer: You have been muted in ${portalChannel} by **${server.name}**\`${server.id}\`\n`
+    )
+    .setTimestamp()
+    .setFooter(
+      `${clientUser.tag}`,
+      clientUser.avatarURL() || clientUser.defaultAvatarURL
+    );
+};
+
 export const mutedServerEmbed = (
   interaction: CommandInteraction,
   duration: number, //in MS
@@ -251,8 +276,10 @@ export const mutedServerEmbed = (
       )
       .setTitle(`Muted`)
       .setDescription(
-        `📩 You have been muted in ${portalChannel} by **${server.name}**\`${server.id}\`\n
-      **Duration:** ${ms(duration, { long: true }) }`
+        `📩 You have been muted in ${portalChannel} by **${server.name}**\`${
+          server.id
+        }\`\n
+      **Duration:** ${ms(duration, { long: true })}`
       )
       .setTimestamp()
       .setFooter(
@@ -313,6 +340,34 @@ export const successfullyMutedEmbed = (
           duration,
           { long: true }
         )}`
+      )
+      .setTimestamp()
+      .setFooter(
+        `${clientUser.tag}`,
+        clientUser.avatarURL() || clientUser.defaultAvatarURL
+      )
+  );
+};
+
+export const successfullyBannedEmbed = (
+  interaction: CommandInteraction,
+  server_id: string,
+  portalChannel: TextChannel
+): MessageEmbed => {
+  const member = interaction.member as GuildMember;
+  const clientUser = interaction.client.user as ClientUser;
+
+  return (
+    new MessageEmbed()
+      //blue
+      .setColor(0x0099ff)
+      .setAuthor(
+        `${member.user.tag}`,
+        member.user.avatarURL() || member.user.defaultAvatarURL
+      )
+      .setTitle(`:hammer: Banned`)
+      .setDescription(
+        `:hammer: You have successfully banned \`${server_id}\` in ${portalChannel.toString()}`
       )
       .setTimestamp()
       .setFooter(
