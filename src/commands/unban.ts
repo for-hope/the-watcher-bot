@@ -56,7 +56,8 @@ module.exports = {
     }
     if (portal.originServerId === server_id) {
       interaction.reply(":x: You can't unban the origin server from a portal!");
-      return;
+      return; 
+      
     }
 
     await portal.unbanServer(server_id);

@@ -135,6 +135,24 @@ export const infoMessageEmbed = (
   );
 };
 
+
+export const portalServerBannedMembersEmbed = (
+  client: Client,
+  bannedServers: string[],
+  channelName: string
+) : MessageEmbed => {
+  return new MessageEmbed()
+    .setColor(0x0099ff)
+    .setTitle(`:hammer: Portal Server Banned Members`)
+    .setDescription(
+      `**${bannedServers.length}** servers are currently banned from the portal.\n\n`
+      + `\`${bannedServers.join("`\n`")}\``
+    )
+    .setFooter(
+      `${client.user?.tag}`,
+      client.user?.avatarURL() || client.user?.defaultAvatarURL
+    );
+};
 export const portalServerMembersEmbed = (
   client: Client,
   servers: Guild[],

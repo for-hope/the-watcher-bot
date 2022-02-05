@@ -63,6 +63,14 @@ export class ConnectValidator {
     return true; //check if the user is a member of the guild and has the required permissions
   }
 
+  private validateBannedServer(): boolean {
+    if (this.portal?.isServerBlacklisted(this.invitedGuildId)) {
+      this.interaction.reply(PORTAL_SERVER_BANNED);
+      return false;
+    }
+    return true;
+  }
+
   private validateSameServer(): boolean {
     if (this.invitedGuildId === this.interaction.guildId) {
       this.errReply("You cannot connect to your own server.");

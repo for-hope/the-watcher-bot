@@ -125,7 +125,16 @@ portalSchema.methods.myServer = function (serverId: string) {
 
 portalSchema.methods.banServer = async function (serverId: string) {
   const portal = this;
+  //if serverId is already banned return
+  if (portal.bannedServers.includes(serverId)) return portal;
   portal.bannedServers.push(serverId);
+  //remove server from portal.servers
+  const serverIndex = portal.servers.findIndex(
+    (server) => server.server_id === serverId
+  );
+  if (serverIndex > -1) {
+    portal.servers.splice(serverIndex, 1);
+  }
   await portal.save();
   return portal;
 };
