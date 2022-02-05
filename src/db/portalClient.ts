@@ -82,6 +82,7 @@ export interface IPortalDocument extends IPortal, Document {
   banServer: (serverId: string) => Promise<IPortalDocument>;
   muteServer: (serverId: string, duration: number) => Promise<IPortalDocument>;
   unmuteServer: (serverId: string) => Promise<IPortalDocument>;
+  unbanServer: (serverId: string) => Promise<IPortalDocument>;
 }
 
 export interface IPortalModel extends Model<IPortalDocument> {
@@ -150,6 +151,18 @@ portalSchema.methods.unmuteServer = async function (serverId: string) {
   const server = portal.myServer(serverId);
   if (server) {
     server.muted = undefined;
+    await portal.save();
+  }
+  return portal;
+};
+
+portalSchema.methods.unbanServer = async function (serverId: string) {
+  const portal = this;
+  const index = portal.bannedServers.indexOf(serverId);
+  //if the server is not banned, return
+  if (index === -1) return portal;
+  if (index > -1) {
+    portal.bannedServers.splice(index, 1);
     await portal.save();
   }
   return portal;

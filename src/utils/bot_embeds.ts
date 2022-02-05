@@ -318,6 +318,35 @@ export const unmutedServerEmbed = (
   );
 };
 
+export const unbannedServerEmbed = (
+  interaction: CommandInteraction,
+  server: Guild,
+  portalChannel: string
+): MessageEmbed => {
+  const member = interaction.member as GuildMember;
+  const clientUser = interaction.client.user as ClientUser;
+
+  return (
+    new MessageEmbed()
+      //green
+      .setColor(0x00ff33)
+      .setAuthor(
+        `${member.user.tag}`,
+        member.user.avatarURL() || member.user.defaultAvatarURL
+      )
+      .setTitle(`Unbanned`)
+      .setDescription(
+        `📩 You have been unbanned in ${portalChannel} by **${server.name}**\`${server.id}\`\n`
+      )
+      .setTimestamp()
+      .setFooter(
+        `${clientUser.tag}`,
+        clientUser.avatarURL() || clientUser.defaultAvatarURL
+      )
+  );
+};
+
+
 export const successfullyMutedEmbed = (
   interaction: CommandInteraction,
   duration: number, //in MS
@@ -349,6 +378,8 @@ export const successfullyMutedEmbed = (
       )
   );
 };
+
+
 
 export const successfullyBannedEmbed = (
   interaction: CommandInteraction,
@@ -397,6 +428,34 @@ export const successfullyUnmutedEmbed = (
       .setTitle(`Muted`)
       .setDescription(
         `📩 You have successfully unmuted \`${server_id}\` in ${portalChannel.toString()}`
+      )
+      .setTimestamp()
+      .setFooter(
+        `${clientUser.tag}`,
+        clientUser.avatarURL() || clientUser.defaultAvatarURL
+      )
+  );
+};
+
+export const successfullyUnbannedEmbed = (
+  interaction: CommandInteraction,
+  server_id: string,
+  portalChannel: TextChannel
+): MessageEmbed => {
+  const member = interaction.member as GuildMember;
+  const clientUser = interaction.client.user as ClientUser;
+
+  return (
+    new MessageEmbed()
+      //blue
+      .setColor(0x0099ff)
+      .setAuthor(
+        `${member.user.tag}`,
+        member.user.avatarURL() || member.user.defaultAvatarURL
+      )
+      .setTitle(`Muted`)
+      .setDescription(
+        `📩 You have successfully unbanned \`${server_id}\` in ${portalChannel.toString()}`
       )
       .setTimestamp()
       .setFooter(
