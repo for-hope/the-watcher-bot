@@ -74,16 +74,16 @@ export const commandHelpEmbed = (client: Client) => {
       {
         name: ":tools: Portal Moderation",
         value:
-          "`/ban` `/unban` `/hardban` `banlist` `/mute` `/unmute` `/purge` `/permissions`\n",
+          "`/ban` `/unban` `banlist` `/mute` `/unmute`\n",
       },
       {
         name: ":information_source: Information",
         value: "`/help` `/info` `/ping` `/serverinfo`\n",
       },
-      {
-        name: ":tada: Fun",
-        value: "`/8ball` `/coinflip` `/roll` `/choose`",
-      },
+      // {
+      //   name: ":tada: Fun",
+      //   value: "`/8ball` `/coinflip` `/roll` `/choose`",
+      // },
       {
         name: ":test_tube: Experimental",
         value: `\`/teleport\`\n\n\n\n**Need More Help?**\nVisit the bot's website [here](https://thewatcher.xyz) or Join the [Support Server](https://discord.gg/) for more help.\n\n**<@${client.user?.id}> is controlled by users with Manage Server permissions.**`,
