@@ -1,0 +1,15 @@
+version: '3.4'
+
+services:
+  db:
+    image: mongo:latest
+    ports:
+      - '27017:27017'
+
+  discord-bot:
+    build: .
+    ports:
+      - '5000:5000'
+    links:
+      - db
+    restart: on-failure
