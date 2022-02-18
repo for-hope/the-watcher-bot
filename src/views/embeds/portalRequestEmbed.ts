@@ -14,7 +14,7 @@ export const portalRequestEmbed = async (
   interaction: CommandInteraction | ButtonInteraction,
   channel: GuildTextBasedChannel
 ) => {
-  const author = interaction.member.user as User;
+  const author = interaction?.member?.user as User;
   const guild = interaction.guild as Guild;
   const clientUser = interaction.client.user as ClientUser;
 

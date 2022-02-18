@@ -147,7 +147,7 @@ export class ConnectValidator {
   }
 
   private async validateServersOnDb(): Promise<boolean> {
-    this.server = await getServerById(this.interaction.guildId);
+    this.server = await getServerById(this.interaction?.guildId as string);
     this.invitedServer = await getServerById(this.invitedGuildId);
     if (!this.server) {
       this.errReply(SELF_SERVER_NOT_SETUP);

@@ -63,7 +63,7 @@ module.exports = {
       embeds: [
         infoMessageEmbed(
           interaction.client,
-          interaction.member.user as User,
+          interaction?.member?.user as User,
           PORTAL_REQUEST_SENT(
             connectCommand.invitedGuild as Guild,
             trafficChannel

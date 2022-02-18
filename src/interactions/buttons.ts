@@ -16,7 +16,7 @@ const teleportRequestButton = async (
 ): Promise<void> => {
   console.log(
     `${
-      interaction.member.user.username
+      interaction?.member?.user.username
     } clicked button interaction ${interaction.channel?.toString()} with interaction id : ${interaction.customId}.`
   );
 };

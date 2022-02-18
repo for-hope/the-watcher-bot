@@ -120,7 +120,7 @@ const portalSchema = new mongoose.Schema<IPortalDocument>({
 });
 
 portalSchema.methods.myServer = function (serverId: string) {
-  return this.servers.find((server) => server.server_id === serverId);
+  return this.servers.find((server: any) => server.server_id === serverId);
 };
 
 portalSchema.methods.banServer = async function (serverId: string) {
@@ -130,7 +130,7 @@ portalSchema.methods.banServer = async function (serverId: string) {
   portal.bannedServers.push(serverId);
   //remove server from portal.servers
   const serverIndex = portal.servers.findIndex(
-    (server) => server.server_id === serverId
+    (server: any) => server.server_id === serverId
   );
   if (serverIndex > -1) {
     portal.servers.splice(serverIndex, 1);
@@ -183,7 +183,7 @@ portalSchema.methods.updateServerStatus = async function (
 ) {
   const portal = this;
 
-  portal.servers.forEach((server) => {
+  portal.servers.forEach((server: any) => {
     if (server.server_id === serverId) {
       server.server_status = serverStatus;
       return;
@@ -200,7 +200,7 @@ portalSchema.methods.addServerRequest = async function (
   const portal = this;
 
   //remove server if it exists on portal
-  portal.servers.forEach((server) => {
+  portal.servers.forEach((server:any) => {
     if (
       server.server_id === guildId &&
       server.server_status !== PortalRequest.approved
@@ -224,7 +224,7 @@ portalSchema.methods.addServerRequest = async function (
 
 portalSchema.methods.denyServerRequest = async function (serverId: string) {
   const portal = this;
-  portal.servers.forEach((server) => {
+  portal.servers.forEach((server:any) => {
     if (
       server.server_id === serverId &&
       server.server_status === PortalRequest.pending
@@ -242,8 +242,8 @@ portalSchema.methods.validChannelIds = function () {
   //remove server if it exists on portal
 
   const approvedChannelIds = portal.servers
-    .filter((server) => server.server_status === PortalRequest.approved)
-    .map((server) => server.channel_id);
+    .filter((server:any) => server.server_status === PortalRequest.approved)
+    .map((server:any) => server.channel_id);
 
   return approvedChannelIds.flat();
 };
@@ -253,7 +253,7 @@ portalSchema.methods.approveServerRequest = async function (
   channelId: string
 ) {
   const portal = this;
-  portal.servers.forEach((server) => {
+  portal.servers.forEach((server:any) => {
     if (
       server.server_id === guildId &&
       server.server_status === PortalRequest.pending
@@ -278,7 +278,7 @@ portalSchema.methods.isServerBlacklisted = function (serverId: string) {
 
 portalSchema.methods.isServerMuted = function (serverId: string) {
   const portal = this;
-  const server = portal.servers.find((server) => server.server_id === serverId);
+  const server = portal.servers.find((server: any) => server.server_id === serverId);
   if (server) {
     const muted = server.muted;
     if (!muted) return false;
@@ -290,7 +290,7 @@ portalSchema.methods.isServerMuted = function (serverId: string) {
 
 portalSchema.methods.isServerLeft = function (serverId: string) {
   const portal = this;
-  const server = portal.servers.find((server) => server.server_id === serverId);
+  const server = portal.servers.find((server: any) => server.server_id === serverId);
   if (server) {
     return server.server_status === PortalRequest.left;
   }

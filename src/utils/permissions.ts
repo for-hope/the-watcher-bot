@@ -30,7 +30,7 @@ export const hasBotManagerRole = async (
     return false;
   }
 
-  const roles = interaction.member.roles as GuildMemberRoleManager;
+  const roles = interaction?.member?.roles as GuildMemberRoleManager;
   const hasManagerRole: boolean = roles.cache.some((role: Role) =>
     (adminRoleIds as string[]).includes(role.id)
   );

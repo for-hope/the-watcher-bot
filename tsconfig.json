@@ -6,7 +6,7 @@
     "resolveJsonModule": true,
     "target": "es6",
     // "noImplicitAny": true,
-    "moduleResolution": "node",
+    "moduleResolution": "node", //
     "sourceMap": true,
     "outDir": "dist",
     "baseUrl": ".",

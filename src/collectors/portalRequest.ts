@@ -33,19 +33,21 @@ export const portalRequestCollector = (
     filter,
   });
 
-  collector.on("collect", async (i: ButtonInteraction) => {
-    const hasPerms = await hasManagerPermission(i);
+  collector.on("collect", async (interaction: ButtonInteraction) => {
+    const hasPerms = await hasManagerPermission(interaction);
     if (!hasPerms) {
       return;
     }
-    const guild = i.guild as Guild;
+
+    const guild = interaction.guild as Guild;
+    const guildId = interaction.guildId as string;
     const portal = await portalByServersChannelId(channel.id);
     if (!portal) {
       //error
       return;
     }
 
-    if (i.customId === PortalResponses.approve) {
+    if (interaction.customId === PortalResponses.approve) {
       const multiverseCategory = (
         await getOrCreateBotCategory(guild, PORTALS_CATEGORY_NAME)
       ).category;
@@ -66,51 +68,51 @@ export const portalRequestCollector = (
       const channelMention = portalChannel.toString();
 
       const updatedPortal = await portal.approveServerRequest(
-        i.guildId,
+        guildId,
         portalChannel.id
       );
 
       updatedPortal.validChannelIds().forEach(async (channelId) => {
-        const channelById = getTextChannel(i.client, channelId);
+        const channelById = getTextChannel(interaction.client, channelId);
         if (!channelById) {
           return;
         }
         await channelById.send({
           embeds: [
             infoMessageEmbed(
-              i.client as Client,
-              i.client.user as User,
-              `:white_check_mark: **${i.user.tag}** from **${guild.name}** approved the portal request! You may now use this channel to communicate between servers.`
+              interaction.client as Client,
+              interaction.client.user as User,
+              `:white_check_mark: **${interaction.user.tag}** from **${guild.name}** approved the portal request! You may now use this channel to communicate between servers.`
             ),
           ],
         });
       });
 
-      await i.update({
+      await interaction.update({
         content: "✅ **Portal request approved!** on " + channelMention,
         components: [],
       });
 
       await updateRequestStatusMessage(
-        i.client,
-        portal.myServer(i.guildId),
+        interaction.client,
+        portal.myServer(guildId),
         PortalRequest.approved
       );
-    } else if (i.customId === PortalResponses.deny) {
-      portal.denyServerRequest(i.guildId);
+    } else if (interaction.customId === PortalResponses.deny) {
+      portal.denyServerRequest(guildId);
       await updateRequestStatusMessage(
-        i.client,
-        portal.myServer(i.guildId),
+        interaction.client,
+        portal.myServer(guildId),
         PortalRequest.denied
       );
-      await i.update({
+      await interaction.update({
         content: "❌ Portal request denied",
         components: [],
       });
 
       //create channel
     } else {
-      await i.reply("Something went wrong");
+      await interaction.reply("Something went wrong");
     }
   });
 
