@@ -1,10 +1,18 @@
-version: '3.4'
+version: "3.8"
 
 services:
   db:
     image: mongo:latest
+    container_name: mongodb
+    environment: 
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=TtLfftEt6k0x
+      - MONGO_INITDB_DATABASE=the-watcher-bot
+    volumes:
+      - ~/mongodb/database:/data/db
     ports:
       - '27017:27017'
+    restart: unless-stopped
 
   discord-bot:
     build: .
