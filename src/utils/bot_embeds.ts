@@ -9,10 +9,12 @@ import {
   User,
   GuildChannel,
   TextChannel,
+  EmbedAuthorData,
 } from "discord.js";
 import { PortalRequestEmojis } from "./decoration";
 import { botCommands } from "../cmds";
 import ms from "ms";
+import { APP_URL, defaultAuthorData, defaultClientFooter } from "./constants";
 
 export const CONNECTION_REQUEST_STATUS = (portalRequest: PortalRequest) => {
   const portalRequestString = portalRequest
@@ -33,10 +35,7 @@ export const CONNECTION_REQUEST_SENT = (
 
   return new MessageEmbed()
     .setColor(0x0099ff)
-    .setAuthor(
-      `${author.user.tag}`,
-      author.user.avatarURL() || author.user.defaultAvatarURL
-    )
+    .setAuthor(defaultAuthorData(author))
     .setTitle(`:cyclone: Portal Request - ${guild.toString()}`)
     .setDescription(
       `📩 A Connection request has been successfully sent to:
@@ -48,21 +47,18 @@ export const CONNECTION_REQUEST_SENT = (
     })
     .setTimestamp()
     .setThumbnail(guild.iconURL() as string) //TODO test
-    .setFooter(
-      `${clientUser.tag}`,
-      clientUser.avatarURL() || clientUser.defaultAvatarURL
-    );
+    .setFooter(defaultClientFooter(clientUser));
 };
 
 export const commandHelpEmbed = (client: Client) => {
   return new MessageEmbed()
     .setColor(0x0099ff)
 
-    .setAuthor(
-      "TheWatcher Command Help",
-      client.user?.avatarURL() || client.user?.defaultAvatarURL || "",
-      "https://thewatcher.xyz"
-    )
+    .setAuthor({
+      name: "TheWatcher Command Help",
+      icon_url: client.user?.displayAvatarURL(),
+      url: APP_URL,
+    } as EmbedAuthorData)
     .setDescription(
       `Use the Slash Command \`/help [command name]\` to get more command information on a specific command.`
     )
@@ -73,8 +69,7 @@ export const commandHelpEmbed = (client: Client) => {
       },
       {
         name: ":tools: Portal Moderation",
-        value:
-          "`/ban` `/unban` `banlist` `/mute` `/unmute`\n",
+        value: "`/ban` `/unban` `banlist` `/mute` `/unmute`\n",
       },
       {
         name: ":information_source: Information",
@@ -89,7 +84,7 @@ export const commandHelpEmbed = (client: Client) => {
         value: `\`/teleport\`\n\n\n\n**Need More Help?**\nVisit the bot's website [here](https://thewatcher.xyz) or Join the [Support Server](https://discord.gg/) for more help.\n\n**<@${client.user?.id}> is controlled by users with Manage Server permissions.**`,
       }
     )
-    .setFooter("thewatcher.xyz", client.user?.avatarURL() || "")
+    .setFooter(defaultClientFooter(client.user as ClientUser, true))
     .setTimestamp();
 };
 export const failedMessageEmbed = (
@@ -100,18 +95,12 @@ export const failedMessageEmbed = (
   return (
     new MessageEmbed()
       //set color error
-      .setAuthor(
-        member.user.tag,
-        member.user.avatarURL() || member.user.defaultAvatarURL
-      )
+      .setAuthor(defaultAuthorData(member))
 
       .setColor(0xff555f)
       .setDescription(failedMessage)
       .setTimestamp()
-      .setFooter(
-        client.user?.tag as string,
-        client?.user?.avatarURL() as string
-      )
+      .setFooter(defaultClientFooter(client.user as ClientUser))
   );
 };
 
@@ -128,25 +117,21 @@ export const infoMessageEmbed = (
       .setColor(0x0099ff)
       .setDescription(infoMessage)
       .setTimestamp()
-      .setFooter(
-        client.user?.tag as string,
-        client?.user?.avatarURL() as string
-      )
+      .setFooter(defaultClientFooter(client.user as ClientUser))
   );
 };
-
 
 export const portalServerBannedMembersEmbed = (
   client: Client,
   bannedServers: string[],
   channelName: string
-) : MessageEmbed => {
+): MessageEmbed => {
   return new MessageEmbed()
     .setColor(0x0099ff)
     .setTitle(`:hammer: Portal Server Banned Members`)
     .setDescription(
-      `**${bannedServers.length}** servers are currently banned from the portal.\n\n`
-      + `\`${bannedServers.join("`\n`")}\``
+      `**${bannedServers.length}** servers are currently banned from the portal.\n\n` +
+        `\`${bannedServers.join("`\n`")}\``
     )
     .setFooter(
       `${client.user?.tag}`,
@@ -169,10 +154,11 @@ export const portalServerMembersEmbed = (
   };
   return new MessageEmbed()
     .setColor(0x0099ff)
-    .setAuthor(
-      `Server Members in "${channelName}"`,
-      client.user?.avatarURL() || client.user?.defaultAvatarURL
-    )
+    .setAuthor({
+      name: `Server Members in "${channelName}"`,
+      icon_url: client.user?.displayAvatarURL(),
+    } as EmbedAuthorData)
+
     .setDescription(
       `**${servers.length} Servers**\n\n` +
         servers
@@ -184,10 +170,7 @@ export const portalServerMembersEmbed = (
           .join("\n")
     )
     .setTimestamp()
-    .setFooter(
-      "thewatcher.xyz",
-      client.user?.avatarURL() || client.user?.defaultAvatarURL
-    );
+    .setFooter(defaultClientFooter(client.user as ClientUser, true));
 };
 
 export const leftPortalEmbed = (
@@ -200,10 +183,7 @@ export const leftPortalEmbed = (
 
   return new MessageEmbed()
     .setColor(0x0099ff)
-    .setAuthor(
-      `${member.user.tag}`,
-      member.user.avatarURL() || member.user.defaultAvatarURL
-    )
+    .setAuthor(defaultAuthorData(member))
     .setTitle(`Left Portal`)
     .setDescription(
       `📩 You have successfully left the portal in 
@@ -211,10 +191,7 @@ export const leftPortalEmbed = (
     )
     .setTimestamp()
     .setThumbnail(guild.iconURL() as string)
-    .setFooter(
-      `${clientUser.tag}`,
-      clientUser.avatarURL() || clientUser.defaultAvatarURL
-    );
+    .setFooter(defaultClientFooter(clientUser));
 };
 
 export const commandEmbed = (
@@ -261,19 +238,13 @@ export const bannedServerEmbed = (
 
   return new MessageEmbed()
     .setColor(0xff3300)
-    .setAuthor(
-      `${member.user.tag}`,
-      member.user.avatarURL() || member.user.defaultAvatarURL
-    )
+    .setAuthor(defaultAuthorData(member))
     .setTitle(`:hammer: Banned`)
     .setDescription(
       `:hammer: You have been muted in ${portalChannel} by **${server.name}**\`${server.id}\`\n`
     )
     .setTimestamp()
-    .setFooter(
-      `${clientUser.tag}`,
-      clientUser.avatarURL() || clientUser.defaultAvatarURL
-    );
+    .setFooter(defaultClientFooter(clientUser));
 };
 
 export const mutedServerEmbed = (
@@ -289,10 +260,7 @@ export const mutedServerEmbed = (
     new MessageEmbed()
       //red
       .setColor(0xff3300)
-      .setAuthor(
-        `${member.user.tag}`,
-        member.user.avatarURL() || member.user.defaultAvatarURL
-      )
+      .setAuthor(defaultAuthorData(member))
       .setTitle(`Muted`)
       .setDescription(
         `📩 You have been muted in ${portalChannel} by **${server.name}**\`${
@@ -302,8 +270,7 @@ export const mutedServerEmbed = (
       )
       .setTimestamp()
       .setFooter(
-        `${clientUser.tag}`,
-        clientUser.avatarURL() || clientUser.defaultAvatarURL
+      defaultClientFooter(clientUser),
       )
   );
 };
@@ -320,18 +287,14 @@ export const unmutedServerEmbed = (
     new MessageEmbed()
       //green
       .setColor(0x00ff33)
-      .setAuthor(
-        `${member.user.tag}`,
-        member.user.avatarURL() || member.user.defaultAvatarURL
-      )
+      .setAuthor(defaultAuthorData(member))
       .setTitle(`Unmuted`)
       .setDescription(
         `📩 You have been unmuted in ${portalChannel} by **${server.name}**\`${server.id}\`\n`
       )
       .setTimestamp()
       .setFooter(
-        `${clientUser.tag}`,
-        clientUser.avatarURL() || clientUser.defaultAvatarURL
+      defaultClientFooter(clientUser),
       )
   );
 };
@@ -348,22 +311,17 @@ export const unbannedServerEmbed = (
     new MessageEmbed()
       //green
       .setColor(0x00ff33)
-      .setAuthor(
-        `${member.user.tag}`,
-        member.user.avatarURL() || member.user.defaultAvatarURL
-      )
+      .setAuthor(defaultAuthorData(member))
       .setTitle(`Unbanned`)
       .setDescription(
         `📩 You have been unbanned in ${portalChannel} by **${server.name}**\`${server.id}\`\n`
       )
       .setTimestamp()
       .setFooter(
-        `${clientUser.tag}`,
-        clientUser.avatarURL() || clientUser.defaultAvatarURL
+       defaultClientFooter(clientUser),
       )
   );
 };
-
 
 export const successfullyMutedEmbed = (
   interaction: CommandInteraction,
@@ -378,10 +336,7 @@ export const successfullyMutedEmbed = (
     new MessageEmbed()
       //blue
       .setColor(0x0099ff)
-      .setAuthor(
-        `${member.user.tag}`,
-        member.user.avatarURL() || member.user.defaultAvatarURL
-      )
+      .setAuthor(defaultAuthorData(member))
       .setTitle(`Muted`)
       .setDescription(
         `📩 You have successfully muted \`${server_id}\` in ${portalChannel.toString()} for ${ms(
@@ -391,13 +346,10 @@ export const successfullyMutedEmbed = (
       )
       .setTimestamp()
       .setFooter(
-        `${clientUser.tag}`,
-        clientUser.avatarURL() || clientUser.defaultAvatarURL
+        defaultClientFooter(clientUser),
       )
   );
 };
-
-
 
 export const successfullyBannedEmbed = (
   interaction: CommandInteraction,
@@ -411,18 +363,14 @@ export const successfullyBannedEmbed = (
     new MessageEmbed()
       //blue
       .setColor(0x0099ff)
-      .setAuthor(
-        `${member.user.tag}`,
-        member.user.avatarURL() || member.user.defaultAvatarURL
-      )
+      .setAuthor(defaultAuthorData(member))
       .setTitle(`:hammer: Banned`)
       .setDescription(
         `:hammer: You have successfully banned \`${server_id}\` in ${portalChannel.toString()}`
       )
       .setTimestamp()
       .setFooter(
-        `${clientUser.tag}`,
-        clientUser.avatarURL() || clientUser.defaultAvatarURL
+       defaultClientFooter(clientUser),
       )
   );
 };
@@ -439,18 +387,14 @@ export const successfullyUnmutedEmbed = (
     new MessageEmbed()
       //blue
       .setColor(0x0099ff)
-      .setAuthor(
-        `${member.user.tag}`,
-        member.user.avatarURL() || member.user.defaultAvatarURL
-      )
+      .setAuthor(defaultAuthorData(member))
       .setTitle(`Muted`)
       .setDescription(
         `📩 You have successfully unmuted \`${server_id}\` in ${portalChannel.toString()}`
       )
       .setTimestamp()
       .setFooter(
-        `${clientUser.tag}`,
-        clientUser.avatarURL() || clientUser.defaultAvatarURL
+       defaultClientFooter(clientUser),
       )
   );
 };
@@ -467,18 +411,14 @@ export const successfullyUnbannedEmbed = (
     new MessageEmbed()
       //blue
       .setColor(0x0099ff)
-      .setAuthor(
-        `${member.user.tag}`,
-        member.user.avatarURL() || member.user.defaultAvatarURL
-      )
+      .setAuthor(defaultAuthorData(member))
       .setTitle(`Muted`)
       .setDescription(
         `📩 You have successfully unbanned \`${server_id}\` in ${portalChannel.toString()}`
       )
       .setTimestamp()
       .setFooter(
-        `${clientUser.tag}`,
-        clientUser.avatarURL() || clientUser.defaultAvatarURL
+       defaultClientFooter(clientUser),
       )
   );
 };

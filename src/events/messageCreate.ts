@@ -1,4 +1,11 @@
-import { Client, Message, MessageEmbed, TextChannel, Guild } from "discord.js";
+import {
+  Client,
+  Message,
+  MessageEmbed,
+  TextChannel,
+  Guild,
+  EmbedAuthorData,
+} from "discord.js";
 import { randomColor } from "../utils/decoration";
 import { channelDimension, dimensionChannels } from "../db/dimensionClient";
 import {
@@ -12,6 +19,7 @@ import {
   filterMessage,
   isBlacklistedFromPortal,
 } from "../services/messageServices";
+import { defaultAuthorData } from "../utils/constants";
 
 module.exports = {
   name: "messageCreate",
@@ -36,7 +44,7 @@ module.exports = {
         );
         if (blacklisted) {
           return;
-        };
+        }
 
         await forwardMessageIfIncluded(ids, message);
       }
@@ -81,9 +89,10 @@ const getMessageEmbed = (messageObject: Message) => {
   const guild = messageObject.guild as Guild;
   const rndColor = messageObject.member?.displayHexColor || "#ffffff";
   const image = messageObject.attachments.first()?.url;
-
+  //   .setAuthor(`${author.tag}`, author.avatarURL() || author.defaultAvatarURL)
   const embed = new MessageEmbed()
-    .setAuthor(`${author.tag}`, author.avatarURL() || author.defaultAvatarURL)
+    .setAuthor(defaultAuthorData(author))
+
     .setDescription(message)
     .setColor(rndColor)
     .setTitle(`||\`${author.id}\`||`)

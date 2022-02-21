@@ -7,6 +7,7 @@ import {
   ClientUser,
   MessageEmbed,
 } from "discord.js";
+import { defaultClientFooter } from "../../utils/constants";
 import { getServerIdsOnPortal } from "../../db/portalClient";
 import { getGuild } from "../../utils/bot_utils";
 
@@ -25,9 +26,12 @@ export const portalRequestEmbed = async (
       `**${author.username}** wants to open a portal connection on
         \`#${channel.name}\``
     )
-    .setAuthor(guild.name, guild.iconURL() as string | undefined)
+    .setAuthor({
+      name: guild.name,
+      iconURL: guild.iconURL() as string | undefined,
+    })
     .setTimestamp()
-    .setFooter(clientUser.tag, clientUser.avatarURL() as string | undefined);
+    .setFooter(defaultClientFooter(clientUser));
 
   //get servers in portal
   const guildIds = await getServerIdsOnPortal(channel.id); //TODO change with servers with approved

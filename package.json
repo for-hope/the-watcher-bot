@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc -b tsconfig.build.json",
     "dev": "cross-env NODE_ENV=development MONGO_URL=mongodb://localhost:27017/test ts-node-dev --respawn --transpile-only --exit-child --watch src src/index.ts",
-    "start": "cross-env NODE_ENV=production MONGO_URL=mongodb://db:27017/the-watcher-bot node .",
+    "start": "cross-env NODE_ENV=production MONGO_URL=mongodb://root:rootpassword@db:27017/the-watcher-bot node .",
     "docker": "docker build -t the-watcher-bot .",
     "prebuild": "rimraf dist",
     "test": "echo \"Error: no test specified\" && exit 1",
