@@ -14,16 +14,18 @@ export const defaultAuthorData = (author: GuildMember | User, url?: string) => {
     author instanceof GuildMember
       ? author.user.displayAvatarURL()
       : author.displayAvatarURL();
-  return {
+
+  const data: EmbedAuthorData = {
     name: tag,
-    iconUrl: iconUrl,
-  } as EmbedAuthorData;
+    iconURL: iconUrl,
+  };
+  return data;
 };
 
 export const defaultClientFooter = (client: ClientUser, website?: boolean) => {
   const text = website ? `${APP_URL}` : `${client.tag}`;
   return {
     text: text,
-    icon_url: client.displayAvatarURL(),
+    iconURL: client.displayAvatarURL(),
   } as EmbedFooterData;
 };
