@@ -4,7 +4,7 @@ import { Server } from "../db/serversClient";
 import { Portal } from "../db/portalClient";
 import { extractUrlFromMessage } from "../utils/bot_utils";
 
-const messageCooldown = 5000; //5 seconds in ms
+const messageCooldown = 1000; //5 seconds in ms
 const createdAtCooldown = 86400000; //24h
 const joinedAtCooldown = 14400000; //4h
 const talkedRecently = new Set();

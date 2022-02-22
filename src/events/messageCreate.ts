@@ -58,7 +58,6 @@ const forwardMessageIfIncluded = async (ids: string[], message: Message) => {
   message.delete();
   const messageAllowed = await allowMessage(message);
   if (!messageAllowed) {
-    console.log("message not allowed");
     return;
   } //message is not allowed
   //channels in the portal
@@ -96,6 +95,9 @@ const getMessageEmbed = (messageObject: Message) => {
     .setDescription(message)
     .setColor(rndColor)
     .setTitle(`||\`${author.id}\`||`)
-    .setFooter(`${guild.name} • ID: ${guild.id}`, guild.iconURL() || "");
+    .setFooter({
+      text: `${guild.name} • ID: ${guild.id}`,
+      iconURL: guild.iconURL() || "",
+    });
   return embedMediaHandler(messageObject, embed);
 };
