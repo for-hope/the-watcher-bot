@@ -1,7 +1,7 @@
 import { REST } from "@discordjs/rest";
 import fs from "fs";
 import { Routes } from "discord-api-types/v9";
-import { clientId, guildId, guildId2, guildId3, token } from "./config.json";
+import { clientId, guildIds, token } from "./config.json";
 import path from "path";
 
 const commandsPath = path.join(__dirname, "commands");
@@ -17,20 +17,12 @@ for (const file of commandFiles) {
 
 const rest = new REST({ version: "9" }).setToken(token);
 
-rest
-  .put(Routes.applicationGuildCommands(clientId, guildId), { body: commands })
-  .then(() => console.log("Successfully registered application commands."))
-  .catch(console.error);
-
-rest
-  .put(Routes.applicationGuildCommands(clientId, guildId2), { body: commands })
-  .then(() => console.log("Successfully registered application commands."))
-  .catch(console.error);
-
-rest
-  .put(Routes.applicationGuildCommands(clientId, guildId3), { body: commands })
-  .then(() => console.log("Successfully registered application commands."))
-  .catch(console.error);
+for (const guildId of guildIds) {
+  rest
+    .put(Routes.applicationGuildCommands(clientId, guildId), { body: commands })
+    .then(() => console.log("Successfully registered application commands."))
+    .catch(console.error);
+}
 
 // rest
 //   .put(Routes.applicationCommands(clientId), { body: commands })

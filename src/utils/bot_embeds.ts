@@ -144,7 +144,7 @@ export const infoMessageEmbed = (
   return (
     new MessageEmbed()
       //set color error
-      .setAuthor(member.tag, member.avatarURL() || member.defaultAvatarURL)
+      .setAuthor({ name: member.tag, iconURL: member.displayAvatarURL() })
 
       .setColor(0x0099ff)
       .setDescription(infoMessage)

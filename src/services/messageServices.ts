@@ -6,7 +6,7 @@ import { extractUrlFromMessage } from "../utils/bot_utils";
 
 const messageCooldown = 1000; //5 seconds in ms
 const createdAtCooldown = 86400000; //24h
-const joinedAtCooldown = 14400000; //4h
+const joinedAtCooldown = 1000 // 14400000; //4h
 const talkedRecently = new Set();
 
 const messageTimeout = (message: Message): boolean => {

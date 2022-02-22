@@ -17,6 +17,7 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction: CommandInteraction) {
   //get channel from options
+  console.log("Mute command called by " + interaction.user.id);
   const channel = (interaction.options.getChannel("channel") ||
     interaction.channel) as TextChannel;
   const portalChannel = await portalByServersChannelId(channel.id);

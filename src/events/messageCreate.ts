@@ -58,6 +58,7 @@ const forwardMessageIfIncluded = async (ids: string[], message: Message) => {
   message.delete();
   const messageAllowed = await allowMessage(message);
   if (!messageAllowed) {
+    console.log("Message not allowed");
     return;
   } //message is not allowed
   //channels in the portal

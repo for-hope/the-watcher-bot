@@ -37,8 +37,10 @@ export const getOrCreateBotCategory = async (
 export const overwritePortalPermissions = async (
   channel: TextChannel
 ): Promise<void> => {
-  console.log("overwriting permissions " + channel.guild.roles.everyone);
   await channel.permissionOverwrites.create(channel.guild.roles.everyone, {
+    VIEW_CHANNEL: false,
+    SEND_MESSAGES: false,
+    READ_MESSAGE_HISTORY: false,
     USE_EXTERNAL_EMOJIS: false,
     USE_EXTERNAL_STICKERS: false,
     USE_PRIVATE_THREADS: false,

@@ -82,11 +82,14 @@ module.exports = {
           READ_MESSAGE_HISTORY: true,
         });
 
-        await trafficChannel.permissionOverwrites.create(guild.id, {
-          VIEW_CHANNEL: false,
-          SEND_MESSAGES: false,
-          READ_MESSAGE_HISTORY: false,
-        });
+        await trafficChannel.permissionOverwrites.create(
+          trafficChannel.guild.roles.everyone,
+          {
+            VIEW_CHANNEL: false,
+            SEND_MESSAGES: false,
+            READ_MESSAGE_HISTORY: false,
+          }
+        );
       }
       await overwritePortalPermissions(trafficChannel);
     }
