@@ -15,6 +15,7 @@ import { PortalRequestEmojis } from "./decoration";
 import { botCommands } from "../cmds";
 import ms from "ms";
 import { APP_URL, defaultAuthorData, defaultClientFooter } from "./constants";
+import { Embed, EmbedAction, EmbedFooterType, EmbedStatus } from "./embed";
 
 export const CONNECTION_REQUEST_STATUS = (portalRequest: PortalRequest) => {
   const portalRequestString = portalRequest
@@ -51,6 +52,37 @@ export const CONNECTION_REQUEST_SENT = (
 };
 
 export const commandHelpEmbed = (client: Client) => {
+  const embed = new Embed();
+  embed.clientUser = client.user as ClientUser;
+  embed.embedProps = {
+    embedStatus: EmbedStatus.DEFAULT,
+    embedFooterType: EmbedFooterType.BOT,
+    embedAction: EmbedAction.BOT_ACTION,
+  };
+  embed.fields = [
+    {
+      name: ":cyclone: Inter-server communications",
+      value: "`/setup` `/connect` `/leave` `/members`",
+    },
+    {
+      name: ":tools: Portal Moderation",
+      value: "`/ban` `/unban` `banlist` `/mute` `/unmute`\n",
+    },
+    {
+      name: ":information_source: Information",
+      value: "`/help` `/info` `/ping` `/serverinfo`\n",
+    },
+    {
+      name: ":test_tube: Experimental",
+      value: `\`/teleport\`\n\n\n\n**Need More Help?**\nVisit the bot's website [here](https://thewatcher.xyz) or Join the [Support Server](https://discord.gg/) for more help.\n\n**<@${client.user?.id}> is controlled by users with Manage Server permissions.**`,
+    },
+  ];
+
+  embed.description = `Use the Slash Command \`/help [command name]\` to get more command information on a specific command.`;
+  return embed.build();
+};
+
+export const newCommandHelpEmbed = (client: Client) => {
   return new MessageEmbed()
     .setColor(0x0099ff)
 
@@ -269,9 +301,7 @@ export const mutedServerEmbed = (
       **Duration:** ${ms(duration, { long: true })}`
       )
       .setTimestamp()
-      .setFooter(
-      defaultClientFooter(clientUser),
-      )
+      .setFooter(defaultClientFooter(clientUser))
   );
 };
 
@@ -293,9 +323,7 @@ export const unmutedServerEmbed = (
         `📩 You have been unmuted in ${portalChannel} by **${server.name}**\`${server.id}\`\n`
       )
       .setTimestamp()
-      .setFooter(
-      defaultClientFooter(clientUser),
-      )
+      .setFooter(defaultClientFooter(clientUser))
   );
 };
 
@@ -317,9 +345,7 @@ export const unbannedServerEmbed = (
         `📩 You have been unbanned in ${portalChannel} by **${server.name}**\`${server.id}\`\n`
       )
       .setTimestamp()
-      .setFooter(
-       defaultClientFooter(clientUser),
-      )
+      .setFooter(defaultClientFooter(clientUser))
   );
 };
 
@@ -345,9 +371,7 @@ export const successfullyMutedEmbed = (
         )}`
       )
       .setTimestamp()
-      .setFooter(
-        defaultClientFooter(clientUser),
-      )
+      .setFooter(defaultClientFooter(clientUser))
   );
 };
 
@@ -369,9 +393,7 @@ export const successfullyBannedEmbed = (
         `:hammer: You have successfully banned \`${server_id}\` in ${portalChannel.toString()}`
       )
       .setTimestamp()
-      .setFooter(
-       defaultClientFooter(clientUser),
-      )
+      .setFooter(defaultClientFooter(clientUser))
   );
 };
 
@@ -393,9 +415,7 @@ export const successfullyUnmutedEmbed = (
         `📩 You have successfully unmuted \`${server_id}\` in ${portalChannel.toString()}`
       )
       .setTimestamp()
-      .setFooter(
-       defaultClientFooter(clientUser),
-      )
+      .setFooter(defaultClientFooter(clientUser))
   );
 };
 
@@ -417,8 +437,6 @@ export const successfullyUnbannedEmbed = (
         `📩 You have successfully unbanned \`${server_id}\` in ${portalChannel.toString()}`
       )
       .setTimestamp()
-      .setFooter(
-       defaultClientFooter(clientUser),
-      )
+      .setFooter(defaultClientFooter(clientUser))
   );
 };

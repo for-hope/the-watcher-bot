@@ -18,7 +18,7 @@ export enum EmbedStatus {
   ERROR = "#ff5252",
   SUCCESS = "#4BB543",
   WARNING = "#ffc107",
-  DEFAULT = "#00076f",
+  DEFAULT = "#4740A4",
 }
 
 export enum EmbedAction {
@@ -41,7 +41,7 @@ export interface IEmbedProps {
   embedFooterType?: EmbedFooterType;
 }
 
-class Embed {
+export class Embed {
   //create constructor
   constructor(
     public title?: string,
@@ -76,6 +76,7 @@ class Embed {
     else embed.setColor(this.embedProps.embedStatus);
     if (this.embedProps.embedFooterType) embed.setFooter(this._getFooter());
     if (this.embedProps.embedAction) embed.setAuthor(this._getAuthor());
+    embed.setTimestamp();
 
     return embed;
   }
