@@ -1,3 +1,21 @@
+export enum SlashCommandOptions {
+  BOOLEAN = "boolean",
+  CHANNEL = "channel",
+  USER = "user",
+  ROLE = "role",
+  STRING = "string",
+  MENTIONABLE = "mentionable",
+  INTEGER = "integer",
+  NUMBER = "number",
+}
+export interface ICommandArgs {
+  name: string;
+  description: string;
+  longDescription?: string;
+  type: SlashCommandOptions;
+  required?: boolean;
+}
+
 interface IBotCommand {
   name: string;
   usage: string;
@@ -5,11 +23,8 @@ interface IBotCommand {
   longDescription: string;
   aliases: string[];
   args: {
-    name: string;
-    description: string;
-    type: string;
-    required: boolean;
-  }[];
+    [key: string]: ICommandArgs;
+  };
 }
 
 const connectCmd: IBotCommand = {
@@ -22,20 +37,20 @@ const connectCmd: IBotCommand = {
     "Connect to a server or multiple servers in a private portal channel!.\n\n" +
     "A connection request will be sent to the server you want to connect to.\n" +
     "If the other server accepts the request, you can commmunicate on the channel you specified .\n",
-  args: [
-    {
+  args: {
+    server_id: {
       name: "server_id",
       description: "The ID of the server you want to connect to.",
-      type: "string",
+      type: SlashCommandOptions.STRING,
       required: true,
     },
-    {
+    channel: {
       name: "channel",
       description: "The channel you want to open the chat portal on.",
-      type: "string",
+      type: SlashCommandOptions.CHANNEL,
       required: true,
     },
-  ],
+  },
 };
 
 const setupCmd: IBotCommand = {
@@ -45,29 +60,29 @@ const setupCmd: IBotCommand = {
   description: "Setup the bot for interserver communications.",
   longDescription:
     "This command is needed to correctly setup the bot to recieve connection requests from other servers, it will create a traffic channel in a new category, you can move the channel and rename it but do not remove it!",
-  args: [
-    {
+  args: {
+    traffic_channel: {
       name: "traffic_channel",
       description:
         "The channel you want to use for receiving and sending connection requests.",
-      type: "string",
+      type: SlashCommandOptions.CHANNEL,
       required: false,
     },
-    {
+    role: {
       name: "role",
       description:
         "The role that can manage this bot and can send or accept connection requests from other servers.",
-      type: "string",
+      type: SlashCommandOptions.ROLE,
       required: false,
     },
-    {
+    multiverse_chat: {
       name: "multiverse_chat",
       description:
-        "This channel is a global general chat between all the servers that have this feature enabled. [experimental]",
-      type: "boolean",
+        "This channel is a global general chat between all the servers that have this feature enabled.",
+      type: SlashCommandOptions.BOOLEAN,
       required: false,
     },
-  ],
+  },
 };
 
 const membersCmd: IBotCommand = {
@@ -79,18 +94,17 @@ const membersCmd: IBotCommand = {
     "This command will list all the members in a channel.\n\n" +
     "If you specify a channel, it will list all the members in that channel.\n" +
     "If you don't specify a channel, it will list all the members in the current channel.",
-  args: [
-    {
+  args: {
+    channel: {
       name: "channel",
       description: "The channel you want to list the members of.",
-      type: "string",
+      type: SlashCommandOptions.CHANNEL,
       required: false,
     },
-  ],
+  },
 };
 
-
-const leaveCmd = {
+const leaveCmd: IBotCommand = {
   name: "leave",
   usage: "leave",
   aliases: ["leave"],
@@ -98,19 +112,20 @@ const leaveCmd = {
   longDescription:
     "This command will leave the current portal in a specific channel.\n\n" +
     "You can use this command in a portal channel to leave the  portal.\n",
-  args : [{
-    name: "channel",
-    description: "The channel you want to leave the portal in. if empty it will leave the current channel.",
-    type: "string",
-    required: false,
-  }],
-
+  args: {
+    channel: {
+      name: "channel",
+      description:
+        "The channel you want to leave the portal in. if empty it will leave the current channel.",
+      type: SlashCommandOptions.CHANNEL,
+      required: false,
+    },
+  },
 };
 
-
-export const botCommands: Map<string, IBotCommand> = new Map([
-  ["connect", connectCmd],
-  ["setup", setupCmd],
-  ["members", membersCmd],
-  ["leave", leaveCmd],
-]);
+export const botCommands = {
+  connect: connectCmd,
+  setup: setupCmd,
+  members: membersCmd,
+  leave: leaveCmd,
+};

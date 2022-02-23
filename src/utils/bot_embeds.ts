@@ -12,7 +12,7 @@ import {
   EmbedAuthorData,
 } from "discord.js";
 import { PortalRequestEmojis } from "./decoration";
-import { botCommands } from "../cmds";
+import { botCommands, ICommandArgs } from "../cmds";
 import ms from "ms";
 import { APP_URL, defaultAuthorData, defaultClientFooter } from "./constants";
 import { Embed, EmbedAction, EmbedFooterType, EmbedStatus } from "./embed";
@@ -230,18 +230,19 @@ export const commandEmbed = (
   client: Client,
   commandName: string
 ): MessageEmbed => {
-  const commandInfo = botCommands.get(commandName);
+  const commandInfo =
+    botCommands[commandName.toString() as keyof typeof botCommands];
   if (!commandInfo) {
     return new MessageEmbed().setColor(0xff0000).setTitle(`Command not found`);
   }
 
-  const argsString = commandInfo.args
-    .map(
-      (arg) =>
-        `\`${arg.name}\` - ${arg.description} - ${
-          arg.required ? "Required" : "Optional"
-        }`
-    )
+  const argsString = Object.keys(commandInfo.args)
+    .map((key: string) => {
+      const arg = commandInfo.args[key];
+      return `\`${arg.name}\` - ${arg.description} - ${
+        arg.required ? "Required" : "Optional"
+      }`;
+    })
     .join(`\n`);
 
   return new MessageEmbed()

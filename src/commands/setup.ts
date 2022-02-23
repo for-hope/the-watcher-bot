@@ -16,115 +16,23 @@ import {
   overwritePortalPermissions,
 } from "../utils/bot_utils";
 import { infoMessageEmbed } from "../utils/bot_embeds";
+import { setupSlashCommand } from "../command-data/setup";
+import { botCommands } from "../cmds";
+import { SetupResponse } from "../responses/setup-response";
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("setup")
-    .setDescription("Setup the server for interserver communications.")
-    .addChannelOption((option) =>
-      option
-        .setName("traffic_channel")
-        .addChannelType(ChannelType.GuildText)
-        .setDescription(
-          "Specify the text channel on which you recieve or send portal connection requests from other servers."
-        )
-        .setRequired(false)
-    )
-    .addRoleOption((option) =>
-      option
-        .setName("role")
-        .setDescription(
-          "Specify the role that can manage this bot and view the traffic channel."
-        )
-        .setRequired(false)
-    )
-    .addBooleanOption((option) =>
-      option
-        .setName("multiverse_chat")
-        .setDescription(
-          "Creates a general portal channel to all other servers within the bot's reach."
-        )
-
-        .setRequired(false)
-    ),
+  data: setupSlashCommand(),
   async execute(interaction: CommandInteraction) {
     //check if the user has the require role or manage server permission
 
-    const hasPerms = await hasManagerPermission(interaction);
-    if (!hasPerms) return;
-
-    const guild = interaction.guild as Guild;
-    let trafficChannel = interaction.options.getChannel(
-      "traffic-channel"
-    ) as GuildTextBasedChannel;
-
-    const adminRole = interaction.options.getRole("role") as Role | undefined;
-    const multiverseChat: boolean =
-      interaction.options.getBoolean("multiverse-chat") || true;
-
-    const multiverseChatChannel = multiverseChat
-      ? await guild.channels.create("Multiverse Chat", {
-          type: "GUILD_TEXT",
-        })
-      : null;
-    if (!trafficChannel) {
-      const category = (await getOrCreateBotCategory(guild, "multiverse"))
-        .category;
-
-      trafficChannel = await guild.channels.create("traffic", {
-        type: "GUILD_TEXT",
-      });
-      await trafficChannel.setParent(category.id);
-
-      if (adminRole) {
-        await trafficChannel.permissionOverwrites.create(adminRole, {
-          VIEW_CHANNEL: true,
-          SEND_MESSAGES: true,
-          READ_MESSAGE_HISTORY: true,
-        });
-
-        await trafficChannel.permissionOverwrites.create(
-          trafficChannel.guild.roles.everyone,
-          {
-            VIEW_CHANNEL: false,
-            SEND_MESSAGES: false,
-            READ_MESSAGE_HISTORY: false,
-          }
-        );
-      }
-      await overwritePortalPermissions(trafficChannel);
+    //1 - check permissions
+    //2 - validate request
+    //3 - process request
+    //4 - send result as a reply
+    const setupResponse = new SetupResponse(interaction);
+    if (!(await setupResponse.validate())) {
+      return;
     }
-
-    if (multiverseChatChannel) {
-      await multiverseChatChannel.setParent(trafficChannel.parentId);
-    }
-
-    //send a message to the traffic channel
-    await trafficChannel.send({
-      embeds: [
-        infoMessageEmbed(
-          interaction.client,
-          interaction?.member?.user as User,
-          TRAFFIC_CHANNEL_SETUP(interaction.member as GuildMember, adminRole)
-        ),
-      ],
-    });
-
-    await setupServer(
-      guild.id,
-      trafficChannel.id,
-      multiverseChatChannel ? multiverseChatChannel.id : undefined,
-      adminRole ? [adminRole.id] : [],
-      false
-    );
-
-    await interaction.reply({
-      embeds: [
-        infoMessageEmbed(
-          interaction.client,
-          interaction?.member?.user as User,
-          BOT_SETUP_REPLY(trafficChannel)
-        ),
-      ],
-    });
+    console.log("valid setup request");
+    setupResponse.process();
   },
 };

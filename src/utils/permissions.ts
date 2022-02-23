@@ -26,20 +26,12 @@ export const hasBotManagerRole = async (
   interaction: CommandInteraction | ButtonInteraction
 ): Promise<boolean> => {
   let adminRoleIds = await getAdminRoles((interaction.guild as Guild).id);
-  if (!adminRoleIds) {
-    return false;
-  }
+  if (!adminRoleIds) return false;
 
   const roles = interaction?.member?.roles as GuildMemberRoleManager;
-  const hasManagerRole: boolean = roles.cache.some((role: Role) =>
+  return roles.cache.some((role: Role) =>
     (adminRoleIds as string[]).includes(role.id)
   );
-
-  if (!hasManagerRole) {
-    return false;
-  }
-
-  return true;
 };
 
 export const hasManagerPermission = async (
@@ -49,7 +41,6 @@ export const hasManagerPermission = async (
   const botManagerRole = await hasBotManagerRole(interaction);
   if (!managerRole && !botManagerRole) {
     const adminRoleIds = await getAdminRoles((interaction.guild as Guild).id);
-    console.log(adminRoleIds);
     await interaction.reply({
       content: `You do not have the required permissions [
           ${!managerRole ? "`Manage Server` " : ""}

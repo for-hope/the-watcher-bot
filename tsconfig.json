@@ -9,7 +9,7 @@
     "moduleResolution": "node", //
     "sourceMap": true,
     "outDir": "dist",
-    "baseUrl": ".",
+    "baseUrl": "src/**/*.ts",
     "paths": {
       "*": ["node_modules/*"]
     }
@@ -28,5 +28,5 @@
       // different options with a single tsconfig.json.
     }
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "test/**/*"]
 }
