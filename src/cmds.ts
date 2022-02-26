@@ -1,3 +1,5 @@
+import { ExtendSlashCommandBuilder } from "./slash";
+
 export enum SlashCommandOptions {
   BOOLEAN = "boolean",
   CHANNEL = "channel",
@@ -16,7 +18,7 @@ export interface ICommandArgs {
   required?: boolean;
 }
 
-interface IBotCommand {
+export interface IBotCommand {
   name: string;
   usage: string;
   description: string;
@@ -123,9 +125,48 @@ const leaveCmd: IBotCommand = {
   },
 };
 
+const banCmd: IBotCommand = {
+  name: "ban",
+  usage: "ban <serverId> [reason]",
+  aliases: ["ban"],
+  description: "Ban a server from the current portal.",
+  longDescription:
+    "This command will ban a server from the current portal.\n\n" +
+    "You can use this command in a portal channel to ban a server.\n",
+  args: {
+    serverId: {
+      name: "server",
+      description: "The server you want to ban.",
+      type: SlashCommandOptions.STRING,
+      required: true,
+    },
+    channel: {
+      name: "channel",
+      description: "The portal channel you want to ban the server from.",
+      type: SlashCommandOptions.CHANNEL,
+      required: false,
+    },
+    reason: {
+      name: "reason",
+      description: "The reason you want to give for banning the server.",
+      type: SlashCommandOptions.STRING,
+      required: false,
+    },
+  },
+};
+
 export const botCommands = {
   connect: connectCmd,
   setup: setupCmd,
   members: membersCmd,
   leave: leaveCmd,
+  ban: banCmd,
+};
+
+export const slashCommand = (cmd: IBotCommand): ExtendSlashCommandBuilder => {
+  const command = new ExtendSlashCommandBuilder()
+    .setName(cmd.name)
+    .setDescription(cmd.description);
+  command.addArgs(cmd.args);
+  return command;
 };

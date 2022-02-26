@@ -5,7 +5,7 @@ import { CONNECTION_REQUEST_STATUS } from "../utils/bot_embeds";
 export const PORTAL_MODEL = "Portal";
 
 export interface IPortalServer {
-  server_id: string;
+  id: string;
   channel_id: string;
   server_status: string;
   requestMessage: {
@@ -25,7 +25,7 @@ export interface IPortal {
   openInvitation?: boolean;
   servers: [
     {
-      server_id: string;
+      id: string;
       channel_id: string;
       server_status: string;
       requestMessage: {
@@ -83,17 +83,19 @@ export interface IPortalDocument extends IPortal, Document {
   muteServer: (serverId: string, duration: number) => Promise<IPortalDocument>;
   unmuteServer: (serverId: string) => Promise<IPortalDocument>;
   unbanServer: (serverId: string) => Promise<IPortalDocument>;
+  findServer: (serverId: string) => IPortalServer | undefined;
 }
 
 export interface IPortalModel extends Model<IPortalDocument> {
   requestMessages: () => Promise<Array<{ id: string; channelId: string }>>;
+  getByChannelId: (channelId: string) => Promise<IPortalDocument | null>;
 }
 
 const portalSchema = new mongoose.Schema<IPortalDocument>({
   name: { type: String, required: true, unique: false },
   servers: [
     {
-      server_id: { type: String, required: true, unique: false },
+      id: { type: String, required: true, unique: false },
       channel_id: { type: String, required: false, unique: false },
       server_status: {
         type: String,
@@ -123,19 +125,20 @@ portalSchema.methods.myServer = function (serverId: string) {
   return this.servers.find((server: any) => server.server_id === serverId);
 };
 
-portalSchema.methods.banServer = async function (serverId: string) {
+portalSchema.methods.banServer = async function (targetServerId: string) {
   const portal = this;
   //if serverId is already banned return
-  if (portal.bannedServers.includes(serverId)) return portal;
-  portal.bannedServers.push(serverId);
+  if (portal.bannedServers.includes(targetServerId)) return portal;
+  portal.bannedServers.push(targetServerId);
   //remove server from portal.servers
   const serverIndex = portal.servers.findIndex(
-    (server: any) => server.server_id === serverId
+    (server: any) => server.server_id === targetServerId
   );
   if (serverIndex > -1) {
     portal.servers.splice(serverIndex, 1);
   }
   await portal.save();
+
   return portal;
 };
 
@@ -200,7 +203,7 @@ portalSchema.methods.addServerRequest = async function (
   const portal = this;
 
   //remove server if it exists on portal
-  portal.servers.forEach((server:any) => {
+  portal.servers.forEach((server: any) => {
     if (
       server.server_id === guildId &&
       server.server_status !== PortalRequest.approved
@@ -224,7 +227,7 @@ portalSchema.methods.addServerRequest = async function (
 
 portalSchema.methods.denyServerRequest = async function (serverId: string) {
   const portal = this;
-  portal.servers.forEach((server:any) => {
+  portal.servers.forEach((server: any) => {
     if (
       server.server_id === serverId &&
       server.server_status === PortalRequest.pending
@@ -242,8 +245,8 @@ portalSchema.methods.validChannelIds = function () {
   //remove server if it exists on portal
 
   const approvedChannelIds = portal.servers
-    .filter((server:any) => server.server_status === PortalRequest.approved)
-    .map((server:any) => server.channel_id);
+    .filter((server: any) => server.server_status === PortalRequest.approved)
+    .map((server: any) => server.channel_id);
 
   return approvedChannelIds.flat();
 };
@@ -253,7 +256,7 @@ portalSchema.methods.approveServerRequest = async function (
   channelId: string
 ) {
   const portal = this;
-  portal.servers.forEach((server:any) => {
+  portal.servers.forEach((server: any) => {
     if (
       server.server_id === guildId &&
       server.server_status === PortalRequest.pending
@@ -278,7 +281,9 @@ portalSchema.methods.isServerBlacklisted = function (serverId: string) {
 
 portalSchema.methods.isServerMuted = function (serverId: string) {
   const portal = this;
-  const server = portal.servers.find((server: any) => server.server_id === serverId);
+  const server = portal.servers.find(
+    (server: any) => server.server_id === serverId
+  );
   if (server) {
     const muted = server.muted;
     if (!muted) return false;
@@ -290,11 +295,20 @@ portalSchema.methods.isServerMuted = function (serverId: string) {
 
 portalSchema.methods.isServerLeft = function (serverId: string) {
   const portal = this;
-  const server = portal.servers.find((server: any) => server.server_id === serverId);
+  const server = portal.servers.find(
+    (server: any) => server.server_id === serverId
+  );
   if (server) {
     return server.server_status === PortalRequest.left;
   }
   return false;
+};
+
+portalSchema.methods.findServer = function (
+  serverId: string
+): IPortalServer | undefined {
+  const portal = this as IPortalDocument;
+  return portal.servers.find((server) => server.id === serverId);
 };
 
 //TODO handle too many requests / limits
@@ -309,6 +323,15 @@ portalSchema.statics.requestMessages = async function () {
     .map((server: any) => server.requestMessage);
 
   return requestMessages;
+};
+
+portalSchema.statics.getByChannelId = async function (
+  channelId: string
+): Promise<IPortalDocument | null> {
+  const portal = await Portal.findOne({
+    "servers.channel_id": channelId,
+  });
+  return portal;
 };
 
 export const Portal = model<IPortalDocument, IPortalModel>(
@@ -369,12 +392,10 @@ export const addOrUpdateServerOnPortal = async (
     }
 
     //if server id doesn't exist push otherwise update
-    const server = portal.servers.find(
-      (server) => server.server_id === serverId
-    );
+    const server = portal.servers.find((server) => server.id === serverId);
     if (!server) {
       portal.servers.push({
-        server_id: serverId,
+        id: serverId,
         channel_id: channelId,
         server_status: serverStatus,
         requestMessage: {
@@ -496,7 +517,7 @@ export const getServerIdsOnPortal = async (
     if (!portal) {
       return [];
     }
-    return portal.servers.map((server) => server.server_id);
+    return portal.servers.map((server) => server.id);
   } catch (err) {
     console.log("Error fetching servers : " + err);
     return [];

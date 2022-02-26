@@ -7,6 +7,8 @@ import {
 } from "discord.js";
 
 export const APP_URL = "https://thewatcher.xyz";
+export const DASHBOARD_CHANNEL_NAME = "dashboard";
+export const BOT_CATEGORY_NAME = "the-watcher";
 
 export const defaultAuthorData = (author: GuildMember | User, url?: string) => {
   const tag = author instanceof GuildMember ? author.user.tag : author.tag;

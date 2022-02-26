@@ -121,13 +121,13 @@ export const newCommandHelpEmbed = (client: Client) => {
 };
 export const failedMessageEmbed = (
   client: Client,
-  member: GuildMember,
+  user: User,
   failedMessage: string
 ) => {
   return (
     new MessageEmbed()
       //set color error
-      .setAuthor(defaultAuthorData(member))
+      .setAuthor(defaultAuthorData(user))
 
       .setColor(0xff555f)
       .setDescription(failedMessage)

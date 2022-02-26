@@ -3,6 +3,7 @@ import {
   NSFWLevel,
   GuildTextBasedChannel,
   CommandInteraction,
+  TextChannel,
 } from "discord.js";
 import mongoose, { model, Document, Model } from "mongoose";
 import { getTextChannel } from "../utils/bot_utils";
@@ -12,9 +13,28 @@ import { portalRequestCollector } from "../collectors/portalRequest";
 
 export const SERVER_MODEL = "Server";
 
+export interface IServerSetup {
+  channelId: string;
+  adminRoleIds: string[];
+  settings?: IServerConfig;
+}
+
+export interface IServerConfig {
+  allowBannedMembers: boolean;
+  allowMedia: boolean;
+  allowNSFW: boolean;
+  allowExternalInvites: boolean;
+}
+
+const DEFAULT_SETTINGS = {
+  allowBannedMembers: false,
+  allowMedia: true,
+  allowNSFW: true,
+  allowExternalInvites: true,
+} as IServerConfig;
 interface IServer {
   serverId: string;
-  trafficChannelId?: string;
+  dashboardChannelId?: string;
   everythingChannelId?: string;
   memberCount: number;
   requestMessages?: [
@@ -28,19 +48,20 @@ interface IServer {
   bannedServers?: string[];
   whiteList?: string[];
   bannedUsers?: string[];
-  allowServerBanned?: boolean;
   createdAt: Date;
   botJoinedAt: Date;
   botLeftAt?: Date;
   nsfwLevel: NSFWLevel;
   isSetup: boolean;
+  settings: IServerConfig;
 }
 export interface IServerDocument extends IServer, Document {
   invite: (
     interaction: CommandInteraction,
-
     channel: GuildTextBasedChannel
   ) => Promise<void>;
+  setup: (serverSetup: IServerSetup) => Promise<IServerDocument>;
+  dashboardChannel: () => Promise<TextChannel | null>;
 }
 
 export interface IServerModel extends Model<IServerDocument> {
@@ -51,11 +72,14 @@ export interface IServerModel extends Model<IServerDocument> {
       requestMessageChannelId: string;
     }[]
   >;
+  new: (guild: Guild) => Promise<IServerDocument>;
+  get: (serverId: string) => Promise<IServerDocument>;
+  DEFAULT_SETTINGS: IServerConfig;
 }
 
 const serverSchema = new mongoose.Schema<IServerDocument>({
   serverId: { type: String, required: true, unique: true },
-  trafficChannelId: {
+  dashboardChannelId: {
     type: String,
     required: false,
     unique: true,
@@ -78,26 +102,25 @@ const serverSchema = new mongoose.Schema<IServerDocument>({
   bannedServers: [{ type: String, required: false, unique: false }],
   bannedUsers: [{ type: String, required: false, unique: false }],
   whiteList: [{ type: String, required: false, unique: false }],
-  allowServerBanned: {
-    type: Boolean,
-    required: false,
-    unique: false,
-    default: false,
-  },
   createdAt: { type: Date, required: false, unique: false },
   botJoinedAt: { type: Date, required: false, unique: false },
   botLeftAt: { type: Date, required: false, unique: false },
   nsfwLevel: { type: String, required: false, unique: false },
   isSetup: { type: Boolean, required: true, unique: false, default: false },
+  settings: {
+    allowBannedMembers: { type: Boolean, required: false, unique: false },
+    allowMedia: { type: Boolean, required: false, unique: false },
+    allowNSFW: { type: Boolean, required: false, unique: false },
+    allowExternalInvites: { type: Boolean, required: false, unique: false },
+  },
 });
 
 serverSchema.methods.invite = async function (
   interaction: CommandInteraction,
   channel: GuildTextBasedChannel
 ): Promise<void> {
-  const trafficChannelId = this.trafficChannelId || "";
-
-  const trafficChannel = getTextChannel(interaction.client, trafficChannelId);
+  const dashboardChannelId = this.dashboardChannelId;
+  const trafficChannel = getTextChannel(interaction.client, dashboardChannelId);
 
   if (!trafficChannel) {
     return;
@@ -128,7 +151,7 @@ serverSchema.methods.invite = async function (
 
 serverSchema.statics.allRequestIds = async function () {
   const servers = await this.find({
-    trafficChannelId: { $exists: true, $nin: ["", undefined] },
+    dashboardChannelId: { $exists: true, $nin: ["", undefined] },
     requestMessages: { $exists: true, $ne: [] },
   });
 
@@ -138,67 +161,47 @@ serverSchema.statics.allRequestIds = async function () {
   return requests.flat();
 };
 
-export const Server = model<IServerDocument, IServerModel>(
-  SERVER_MODEL,
-  serverSchema
-);
-export const getTrafficChannel = async (
-  server: Guild
-): Promise<GuildTextBasedChannel> => {
-  const serverModel = await Server.findOne({ serverId: server.id });
-  if (!serverModel || !serverModel.trafficChannelId) {
-    throw new Error(
-      "I can't find a traffic channel in the server! Please let them know to `/setup` the bot correctly."
-    );
-  }
+// serverSchema.statics.getTrafficChannel = async function (
+//   serverId: string
+// ): Promise<GuildTextBasedChannel | null> {
+//   const server = await this.findOne({ serverId });
+//   if (!server) {
+//     return null;
+//   }
+//   const trafficChannelId = server.trafficChannelId;
+//   const trafficChannel = getTextChannel(server.serverId, trafficChannelId);
+//   return trafficChannel;
+// };
 
-  const trafficChannel = getTextChannel(
-    server.client,
-    serverModel.trafficChannelId
-  );
-  if (!trafficChannel) {
-    throw new Error(
-      "I can't find a traffic channel in the server! Please let them know to `/setup` the bot correctly."
-    );
-  }
-  return trafficChannel;
-};
+serverSchema.methods.dashboardChannel =
+  async function (): Promise<TextChannel | null> {
+    const dashboardChannelId = this.dashboardChannelId;
+    const dashboardChannel = getTextChannel(this.serverId, dashboardChannelId);
+    return dashboardChannel;
+  };
 
-export const setupServer = async (
-  serverId: string,
-  trafficChannelId: string,
-  everythingChannelId?: string,
-  adminRoles?: string[],
-  allowServerBanned?: boolean
-) => {
-  //find and uopdate server
-  const server = await Server.findOneAndUpdate(
-    { serverId },
-    {
-      serverId,
-      trafficChannelId,
-      everythingChannelId,
-      adminRoles,
-      allowServerBanned,
-      isSetup: true,
-    },
-    { upsert: true, new: true }
-  );
+serverSchema.methods.setup = async function (
+  serverSetup: IServerSetup
+): Promise<IServerDocument> {
+  const server = await this.upsert({
+    dashboardChannelId: serverSetup.channelId,
+    adminRoles: serverSetup.adminRoleIds,
+    isSetup: true,
+    settings: serverSetup.settings || DEFAULT_SETTINGS,
+  });
+  await this.save();
   return server;
 };
 
-export const newServer = async (guild: Guild) => {
+serverSchema.statics.new = async function (guild: Guild) {
+  //check if server exists by serverId
   const serverId = guild.id;
   const memberCount = guild.memberCount;
   const createdAt = guild.createdAt;
   const botJoinedAt = guild.joinedAt;
   const nsfwLevel = guild.nsfwLevel;
-
-  //check if server exists by serverId
   const server = await Server.findOne({ serverId });
-  if (server) {
-    return;
-  }
+  if (server) return;
   const newServer = new Server({
     serverId,
     memberCount,
@@ -210,23 +213,104 @@ export const newServer = async (guild: Guild) => {
   return newServer;
 };
 
-export const getAdminRoles = async (serverId: string) => {
-  const server = await Server.findOne({ serverId });
+serverSchema.statics.get = async function (serverId: string) {
+  const server = await this.findOne({ serverId });
   if (!server) {
-    return;
+    return null;
   }
-  return server.adminRoles;
+  return server as IServerDocument;
 };
 
-export const getServerById = async (
-  serverId: string
-): Promise<IServerDocument> => {
-  try {
-    const server = await Server.findOne({ serverId });
+export const Server = model<IServerDocument, IServerModel>(
+  SERVER_MODEL,
+  serverSchema
+);
 
-    return server as IServerDocument;
-  } catch (error) {
-    console.error(error);
-    throw new Error("Server not found");
-  }
-};
+// export const getTrafficChannel = async (
+//   server: Guild
+// ): Promise<GuildTextBasedChannel> => {
+//   const serverModel = await Server.findOne({ serverId: server.id });
+//   if (!serverModel || !serverModel.trafficChannelId) {
+//     throw new Error(
+//       "I can't find a traffic channel in the server! Please let them know to `/setup` the bot correctly."
+//     );
+//   }
+
+//   const trafficChannel = getTextChannel(
+//     server.client,
+//     serverModel.trafficChannelId
+//   );
+//   if (!trafficChannel) {
+//     throw new Error(
+//       "I can't find a traffic channel in the server! Please let them know to `/setup` the bot correctly."
+//     );
+//   }
+//   return trafficChannel;
+// };
+
+// export const setupServer = async (
+//   serverId: string,
+//   trafficChannelId: string,
+//   everythingChannelId?: string,
+//   adminRoles?: string[],
+//   allowServerBanned?: boolean
+// ) => {
+//   //find and uopdate server
+//   const server = await Server.findOneAndUpdate(
+//     { serverId },
+//     {
+//       serverId,
+//       trafficChannelId,
+//       everythingChannelId,
+//       adminRoles,
+//       allowServerBanned,
+//       isSetup: true,
+//     },
+//     { upsert: true, new: true }
+//   );
+//   return server;
+// };
+
+// export const newServer = async (guild: Guild) => {
+//   const serverId = guild.id;
+//   const memberCount = guild.memberCount;
+//   const createdAt = guild.createdAt;
+//   const botJoinedAt = guild.joinedAt;
+//   const nsfwLevel = guild.nsfwLevel;
+
+//   //check if server exists by serverId
+//   const server = await Server.findOne({ serverId });
+//   if (server) {
+//     return;
+//   }
+//   const newServer = new Server({
+//     serverId,
+//     memberCount,
+//     nsfwLevel,
+//     createdAt,
+//     botJoinedAt,
+//   });
+//   await newServer.save();
+//   return newServer;
+// };
+
+// export const getAdminRoles = async (serverId: string) => {
+//   const server = await Server.findOne({ serverId });
+//   if (!server) {
+//     return;
+//   }
+//   return server.adminRoles;
+// };
+
+// export const getServerById = async (
+//   serverId: string
+// ): Promise<IServerDocument> => {
+//   try {
+//     const server = await Server.findOne({ serverId });
+
+//     return server as IServerDocument;
+//   } catch (error) {
+//     console.error(error);
+//     throw new Error("Server not found");
+//   }
+// };

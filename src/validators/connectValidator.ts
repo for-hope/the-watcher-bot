@@ -1,7 +1,6 @@
 import {
   CommandInteraction,
   Guild,
-  GuildMember,
   GuildTextBasedChannel,
   TextChannel,
 } from "discord.js";
@@ -13,7 +12,7 @@ import {
 } from "../db/portalClient";
 import { hasManagerPermission } from "../utils/permissions";
 import { getGuild, getTextChannel } from "../utils/bot_utils";
-import { getServerById, IServerDocument } from "../db/serversClient";
+import { IServerDocument, Server } from "../db/serversClient";
 import {
   NO_COMMAND_PERMISSON,
   OPEN_INVITES_DISABLED,
@@ -59,6 +58,7 @@ export class ConnectValidator {
     if (!(await this.validatePortalChannel())) return false;
     if (!(await this.validateOwnTrafficChannel())) return false;
     if (!this.validateInvitedGuildTrafficChannel) return false;
+    if (!this.validateBannedServer()) return false;
 
     return true; //check if the user is a member of the guild and has the required permissions
   }
@@ -101,7 +101,7 @@ export class ConnectValidator {
         return false;
       }
       const portalServer = portalChannel.servers.find(
-        (server) => server.server_id === this.invitedGuildId
+        (server) => server.id === this.invitedGuildId
       );
       if (portalServer) {
         const serverState = portalServer.server_status;
@@ -126,7 +126,7 @@ export class ConnectValidator {
 
   private async validateOwnTrafficChannel(): Promise<boolean> {
     try {
-      const id = this.server?.trafficChannelId;
+      const id = this.server?.dashboardChannelId;
       if (id) {
         const trafficChannel = getTextChannel(this.interaction.client, id);
         if (trafficChannel) {
@@ -147,8 +147,8 @@ export class ConnectValidator {
   }
 
   private async validateServersOnDb(): Promise<boolean> {
-    this.server = await getServerById(this.interaction?.guildId as string);
-    this.invitedServer = await getServerById(this.invitedGuildId);
+    this.server = await Server.get(this.interaction?.guildId!);
+    this.invitedServer = await Server.get(this.invitedGuildId);
     if (!this.server) {
       this.errReply(SELF_SERVER_NOT_SETUP);
       return false;
@@ -181,7 +181,7 @@ export class ConnectValidator {
 
   private validateInvitedGuildTrafficChannel(): boolean {
     const trafficChannelId = (this.invitedServer as IServerDocument)
-      .trafficChannelId;
+      .dashboardChannelId;
     if (!trafficChannelId) {
       this.errReply(OTHER_SERVER_NOT_SETUP);
 
@@ -230,7 +230,7 @@ export class ConnectValidator {
     await this.portal.addServerRequest(
       this.invitedGuildId,
       requestStatusMsgId,
-      this.server?.trafficChannelId as string
+      this.server?.dashboardChannelId as string
     );
 
     return true;
@@ -241,7 +241,7 @@ export class ConnectValidator {
       embeds: [
         failedMessageEmbed(
           this.interaction.client,
-          this.interaction.member as GuildMember,
+          this.interaction.user!,
           msg
         ),
       ],

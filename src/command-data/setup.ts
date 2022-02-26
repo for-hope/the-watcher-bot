@@ -1,5 +1,4 @@
-import { SlashCommandBuilder } from "@discordjs/builders";
-import { botCommands, ICommandArgs, SlashCommandOptions } from "../cmds";
+import { botCommands } from "../cmds";
 import { ExtendSlashCommandBuilder } from "../slash";
 
 const cmd = botCommands.setup;

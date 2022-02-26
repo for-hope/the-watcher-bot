@@ -42,7 +42,7 @@ module.exports = {
       return;
     }
 
-    if (!portal.servers.map((server) => server.server_id).includes(server_id)) {
+    if (!portal.servers.map((server) => server.id).includes(server_id)) {
       interaction.reply(
         "The target server that you're trying to ban is not in this portal!"
       );

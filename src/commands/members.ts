@@ -27,7 +27,7 @@ export async function execute(interaction: CommandInteraction) {
   }
 
   const servers = portalChannel.servers;
-  const serverIds = servers.map((server) => server.server_id);
+  const serverIds = servers.map((server) => server.id);
   const mutedServerIds = serverIds.filter((serverId) =>
     portalChannel.isServerMuted(serverId)
   );
