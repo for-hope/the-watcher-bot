@@ -155,12 +155,32 @@ const banCmd: IBotCommand = {
   },
 };
 
+const banListCmd: IBotCommand = {
+  name: "banlist",
+  usage: "banlist",
+  aliases: ["banlist"],
+  description: "List all the banned servers from the current portal.",
+  longDescription:
+    "This command will list all the banned servers from the current portal.\n\n" +
+    "You can use this command in a portal channel to list all the banned servers.\n",
+  args: {
+    channel: {
+      name: "channel",  
+      description: "The portal channel you want to list the banned servers from.",
+      type: SlashCommandOptions.CHANNEL,
+      required: false,
+    },
+  },
+};
+
+
 export const botCommands = {
   connect: connectCmd,
   setup: setupCmd,
   members: membersCmd,
   leave: leaveCmd,
   ban: banCmd,
+  banList: banListCmd,
 };
 
 export const slashCommand = (cmd: IBotCommand): ExtendSlashCommandBuilder => {

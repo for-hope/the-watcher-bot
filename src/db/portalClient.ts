@@ -18,7 +18,7 @@ export interface IPortalServer {
   };
 }
 export interface IPortal {
-  name: { type: String; required: true };
+  name: string;
   creatorId: string;
   originServerId: string;
   originChannelId: string;
@@ -213,7 +213,7 @@ portalSchema.methods.addServerRequest = async function (
   });
 
   portal.servers.push({
-    server_id: guildId,
+    id: guildId,
     channel_id: "",
     server_status: PortalRequest.pending,
     requestMessage: {

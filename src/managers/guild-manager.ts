@@ -120,9 +120,10 @@ export class TWGuildManager {
     return message;
   };
 
-  public replyWithEmbed = async (embed: MessageEmbed): Promise<void> => {
+  public replyWithEmbed = async (embed: MessageEmbed, ephemeral?: boolean): Promise<void> => {
     await this.interaction.reply({
       embeds: [embed],
+      ephemeral: ephemeral,
     });
   };
 }

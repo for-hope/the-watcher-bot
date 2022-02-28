@@ -8,8 +8,10 @@ module.exports = {
   async execute(interaction: CommandInteraction) {
     const banCommand = new BanCommand(interaction);
     if (!(await banCommand.validateAndReply())) return;
-    const executed = await banCommand.execute();
-    executed ? banCommand.successReply() : banCommand.failureReply();
+    try {
+      await banCommand.execute();
+    } catch (e) {
+      banCommand.failureReply();
+    }
   },
 };
- 

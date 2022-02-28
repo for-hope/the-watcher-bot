@@ -6,7 +6,7 @@ import {
   TextChannel,
   User,
 } from "discord.js";
-import { botCommands} from "../cmds";
+import { botCommands } from "../cmds";
 import { IServerSetup, Server } from "../db/serversClient";
 import { TWGuildManager } from "../managers/guild-manager";
 import { infoMessageEmbed } from "../utils/bot_embeds";
@@ -47,6 +47,28 @@ export const SetupCommand: ICmdStatic = class SetupCommand extends TwCmd {
     this.args();
   }
 
+  public successReply = async () => {
+    if (!this.dashboardChannel) return;
+    await TWGuildManager.sendEmbed(
+      this.dashboardChannel,
+      infoMessageEmbed(
+        this.interaction.client,
+        this.interaction.user!,
+        TRAFFIC_CHANNEL_SETUP(
+          this.interaction.member as GuildMember,
+          this.adminRole
+        )
+      )
+    );
+    await this.guildManager.replyWithEmbed(
+      infoMessageEmbed(
+        this.interaction.client,
+        this.interaction.user!,
+        BOT_SETUP_REPLY(this.dashboardChannel)
+      )
+    );
+  };
+
   public execute = async (): Promise<boolean> => {
     const guild = this.interaction.guild!;
     const user = this.interaction.user! as User;
@@ -70,28 +92,7 @@ export const SetupCommand: ICmdStatic = class SetupCommand extends TwCmd {
       adminRoleIds: this.adminRole ? [this.adminRole.id] : [],
     };
     const updatedServer = await server.setup(serverSetup);
-    return updatedServer.isSetup;
-  };
-
-  public successReply = async () => {
-    if (!this.dashboardChannel) return;
-    await TWGuildManager.sendEmbed(
-      this.dashboardChannel,
-      infoMessageEmbed(
-        this.interaction.client,
-        this.interaction.user!,
-        TRAFFIC_CHANNEL_SETUP(
-          this.interaction.member as GuildMember,
-          this.adminRole
-        )
-      )
-    );
-    await this.guildManager.replyWithEmbed(
-      infoMessageEmbed(
-        this.interaction.client,
-        this.interaction.user!,
-        BOT_SETUP_REPLY(this.dashboardChannel)
-      )
-    );
+    if (updatedServer.isSetup) await this.successReply();
+    return true;
   };
 };

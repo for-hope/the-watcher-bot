@@ -6,7 +6,12 @@ module.exports = {
   async execute(interaction: CommandInteraction) {
     const setupCommand = new SetupCommand(interaction);
     if (!(await setupCommand.validateAndReply())) return;
-    const executed = await setupCommand.execute();
-    executed ? setupCommand.successReply() : setupCommand.failureReply();
+    try {
+      await setupCommand.execute();
+      //log execution
+    } catch (e) {
+      //console.log(e);
+      setupCommand.failureReply();
+    }
   },
 };
