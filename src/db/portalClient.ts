@@ -89,6 +89,7 @@ export interface IPortalDocument extends IPortal, Document {
 export interface IPortalModel extends Model<IPortalDocument> {
   requestMessages: () => Promise<Array<{ id: string; channelId: string }>>;
   getByChannelId: (channelId: string) => Promise<IPortalDocument | null>;
+  newPortal: (interaction: CommandInteraction, channel:TextChannel) => Promise<IPortalDocument> | null;	
 }
 
 const portalSchema = new mongoose.Schema<IPortalDocument>({
@@ -332,6 +333,43 @@ portalSchema.statics.getByChannelId = async function (
     "servers.channel_id": channelId,
   });
   return portal;
+};
+
+portalSchema.statics.newPortal = async function (
+  interaction: CommandInteraction,
+  channel: TextChannel
+) {
+  try {
+    const authorId = interaction.user.id;
+    const serverId = interaction.guildId;
+    let portal = await Portal.findOne({ "servers.channel_id": channel.id });
+
+    if (portal) {
+      return portal;
+    }
+
+    portal = new Portal({
+      name: channel.name,
+      creatorId: authorId,
+      originServerId: serverId,
+      originChannelId: channel.id,
+      servers: [
+        {
+          server_id: serverId,
+          channel_id: channel.id,
+          server_status: PortalRequest.approved,
+        },
+      ],
+      bannedUsers: [],
+      bannedServers: [],
+    });
+
+    await portal.save();
+
+    return portal;
+  } catch (error) {
+    return null;
+  }
 };
 
 export const Portal = model<IPortalDocument, IPortalModel>(

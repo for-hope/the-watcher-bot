@@ -2,7 +2,11 @@ import { CommandInteraction } from "discord.js";
 import { IBotCommand } from "../cmds";
 import { TWGuildManager } from "../managers/guild-manager";
 import { failedMessageEmbed } from "../utils/bot_embeds";
-import { IValidationPerms, Validator } from "../validators/Validator";
+import {
+  ICustomValidators,
+  IValidationPerms,
+  Validator,
+} from "../validators/Validator";
 
 export interface ICmdStatic {
   new (interaction: CommandInteraction): TwCmd;
@@ -16,14 +20,22 @@ export default abstract class TwCmd {
     userPermFlags: [],
     customPermFlags: [],
   };
+
+  customValidators: ICustomValidators = {};
+
   validator: Validator;
   guildManager: TWGuildManager;
 
   abstract DEFAULT_ERROR_MESSAGE: string;
-  abstract args: () => void;
+  abstract args(): void;
   constructor(interaction: CommandInteraction) {
     this.interaction = interaction;
-    this.validator = new Validator(interaction, this.validationPerms);
+    this.args();
+    this.validator = new Validator(
+      interaction,
+      this.validationPerms,
+      this.customValidators
+    );
     this.guildManager = new TWGuildManager(this.interaction);
   }
 

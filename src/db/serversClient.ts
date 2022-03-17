@@ -117,9 +117,9 @@ const serverSchema = new mongoose.Schema<IServerDocument>({
 
 serverSchema.methods.invite = async function (
   interaction: CommandInteraction,
-  channel: GuildTextBasedChannel
+  channelToOpenAPortal: TextChannel
 ): Promise<void> {
-  const dashboardChannelId = this.dashboardChannelId;
+  const dashboardChannelId = this.dashboardChannelId || "";
   const trafficChannel = getTextChannel(interaction.client, dashboardChannelId);
 
   if (!trafficChannel) {
@@ -127,7 +127,7 @@ serverSchema.methods.invite = async function (
   }
   const messageContent = await PortalViews.request(
     interaction,
-    channel,
+    channelToOpenAPortal,
     this.serverId
   );
 
@@ -135,18 +135,18 @@ serverSchema.methods.invite = async function (
   this.requestMessages
     ? this.requestMessages.push({
         requestMessageId: requestMessage.id,
-        originChannelId: channel.id,
+        originChannelId: channelToOpenAPortal.id,
         requestMessageChannelId: trafficChannel.id,
       })
     : (this.requestMessages = [
         {
           requestMessageId: requestMessage.id,
-          originChannelId: channel.id,
+          originChannelId: channelToOpenAPortal.id,
           requestMessageChannelId: trafficChannel.id,
         },
       ]);
   await this.save();
-  portalRequestCollector(requestMessage, channel);
+  portalRequestCollector(requestMessage, channelToOpenAPortal);
 };
 
 serverSchema.statics.allRequestIds = async function () {

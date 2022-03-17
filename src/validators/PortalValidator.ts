@@ -2,6 +2,13 @@ import { IPortalDocument } from "../db/portalClient";
 import { IValidation } from "./Validator";
 
 export class PortalValidator {
+  //IMPORTANT FLAGS 200 ~ 299
+  public static FLAGS = {
+    PORTAL_EXISTS: 200,
+    PORTAL_OWNER: 201,
+    CAN_BAN: 202,
+    IS_NOT_BANNED: 203,
+  };
   private portal: IPortalDocument | null = null;
   private serverId: string = "";
 
@@ -55,7 +62,7 @@ export class PortalValidator {
     if (!this.serverExists(targetServerId).isValid)
       return this.serverExists(targetServerId);
 
-   if (!this.serverOwner().isValid) return this.serverOwner();
+    if (!this.serverOwner().isValid) return this.serverOwner();
 
     if (targetServerId === this.portal?.originServerId)
       return {
@@ -67,5 +74,28 @@ export class PortalValidator {
       isValid: true,
       message: "",
     };
+  };
+
+  public isNotBanned = async (): Promise<IValidation> => {
+    if (this.portal?.isServerBlacklisted(this.serverId)) {
+      return {
+        isValid: false,
+        message: "This server is banned from this portal.",
+      };
+    }
+    return {
+      isValid: true,
+      message: "",
+    };
+  };
+
+  public validateFlag = async (flag: number): Promise<IValidation> => {
+    const flagMap: { [key: number]: IValidation } = {
+      [PortalValidator.FLAGS.PORTAL_EXISTS]: this.portalExists(),
+      [PortalValidator.FLAGS.PORTAL_OWNER]: this.serverOwner(),
+      [PortalValidator.FLAGS.CAN_BAN]: await this.canBan(this.serverId),
+    };
+
+    return flagMap[flag];
   };
 }

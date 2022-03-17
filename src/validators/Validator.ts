@@ -6,6 +6,8 @@ import {
 } from "discord.js";
 import { botCommands } from "../cmds";
 import { IServerDocument, Server } from "../db/serversClient";
+import { PortalValidator } from "./PortalValidator";
+import { ServerValidator } from "./ServerValidator";
 
 export interface IValidation {
   isValid: boolean;
@@ -18,12 +20,19 @@ export interface IValidationPerms {
   customPermFlags: number[];
 }
 
+export interface ICustomValidators {
+  serverValidator?: ServerValidator;
+  portalValidator?: PortalValidator;
+}
+
 export class Validator {
   public static FLAGS = {
     IS_SERVER_NOT_SETUP: 0,
     IS_SERVER_SETUP: 1,
     BOT_MANAGER_ROLE: 2,
+    IS_DIFFERENT_SERVER: 3,
   };
+
   private interaction: CommandInteraction;
   private server: Promise<IServerDocument>;
   private validationPerms: IValidationPerms = {
@@ -32,13 +41,19 @@ export class Validator {
     customPermFlags: [],
   };
 
+  private customValidators: ICustomValidators = {};
+
   constructor(
     interaction: CommandInteraction,
-    validationPerms: IValidationPerms
+    validationPerms: IValidationPerms,
+    customValidators?: ICustomValidators
   ) {
     this.interaction = interaction;
     this.validationPerms = validationPerms;
     this.server = Server.get(this.interaction?.guildId!);
+    if (customValidators) {
+      this.customValidators = customValidators;
+    }
   }
 
   private _serverSetupIs = async (setup?: boolean): Promise<IValidation> => {
@@ -88,8 +103,20 @@ export class Validator {
       [Validator.FLAGS.IS_SERVER_SETUP]: await this._serverSetupIs(true),
       [Validator.FLAGS.BOT_MANAGER_ROLE]: await this._botManagerRole(),
     };
-
-    return flagMap[flag];
+    const serverValidation = this.customValidators.serverValidator
+      ? await this.customValidators.serverValidator.validateFlag(flag)
+      : null;
+    const portalValidation = this.customValidators.portalValidator
+      ? await this.customValidators.portalValidator.validateFlag(flag)
+      : null;
+    return (
+      flagMap[flag] ||
+      serverValidation ||
+      portalValidation || {
+        isValid: true,
+        message: `Permission ${flag} doesn't exist. this is most likely a bug.`,
+      }
+    );
   };
 
   public hasBotPermissions = async (): Promise<IValidation> => {
