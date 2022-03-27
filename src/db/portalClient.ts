@@ -1,5 +1,6 @@
 import { Client, CommandInteraction, TextChannel } from "discord.js";
 import mongoose, { model, Document, Model } from "mongoose";
+import { TWGuildManager } from "../managers/TWGuildManager";
 import { CONNECTION_REQUEST_STATUS } from "../utils/bot_embeds";
 
 export const PORTAL_MODEL = "Portal";
@@ -79,6 +80,8 @@ export interface IPortalDocument extends IPortal, Document {
   isServerBlacklisted: (serverId: string) => boolean;
   isServerMuted: (serverId: string) => boolean;
   isServerLeft: (serverId: string) => boolean;
+  leave: (serverId: string) => Promise<IPortalDocument>;
+  eventMessage: (client: Client, message: string) => Promise<IPortalDocument>;
   banServer: (serverId: string) => Promise<IPortalDocument>;
   muteServer: (serverId: string, duration: number) => Promise<IPortalDocument>;
   unmuteServer: (serverId: string) => Promise<IPortalDocument>;
@@ -89,7 +92,10 @@ export interface IPortalDocument extends IPortal, Document {
 export interface IPortalModel extends Model<IPortalDocument> {
   requestMessages: () => Promise<Array<{ id: string; channelId: string }>>;
   getByChannelId: (channelId: string) => Promise<IPortalDocument | null>;
-  newPortal: (interaction: CommandInteraction, channel:TextChannel) => Promise<IPortalDocument> | null;	
+  newPortal: (
+    interaction: CommandInteraction,
+    channel: TextChannel
+  ) => Promise<IPortalDocument> | null;
 }
 
 const portalSchema = new mongoose.Schema<IPortalDocument>({
@@ -121,6 +127,29 @@ const portalSchema = new mongoose.Schema<IPortalDocument>({
   bannedServers: [typeof String],
   bannedUsers: [typeof String],
 });
+
+portalSchema.methods.eventMessage = async function (
+  client: Client,
+  message: string
+) {
+  const portal = this as IPortalDocument;
+  //send message to every server in the portal
+  portal.servers.forEach((server) => {
+    if (server.server_status !== PortalRequest.approved) {
+      return;
+    }
+    const portalChannel = server.channel_id;
+    TWGuildManager.getTextChannel(client, portalChannel).send(message);
+    return portal;
+  });
+
+  return portal;
+};
+
+portalSchema.methods.leave = async function (serverId: string) {
+  await this.updateServerStatus(serverId, PortalRequest.left);
+  return this;
+};
 
 portalSchema.methods.myServer = function (serverId: string) {
   return this.servers.find((server: any) => server.server_id === serverId);

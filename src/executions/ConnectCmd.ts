@@ -9,7 +9,7 @@ import {
 import { botCommands } from "../cmds";
 import { Portal, PortalRequest } from "../db/portalClient";
 import { Server } from "../db/serversClient";
-import { TWGuildManager } from "../managers/guild-manager";
+import { TWGuildManager } from "../managers/TWGuildManager";
 import { CONNECTION_REQUEST_SENT, infoMessageEmbed } from "../utils/bot_embeds";
 import { PORTAL_REQUEST_SENT } from "../utils/bot_messages";
 import { getGuild } from "../utils/bot_utils";

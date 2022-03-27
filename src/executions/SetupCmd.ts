@@ -8,7 +8,7 @@ import {
 } from "discord.js";
 import { botCommands } from "../cmds";
 import { IServerSetup, Server } from "../db/serversClient";
-import { TWGuildManager } from "../managers/guild-manager";
+import { TWGuildManager } from "../managers/TWGuildManager";
 import { infoMessageEmbed } from "../utils/bot_embeds";
 import { BOT_SETUP_REPLY, TRAFFIC_CHANNEL_SETUP } from "../utils/bot_messages";
 import { BOT_CATEGORY_NAME, DASHBOARD_CHANNEL_NAME } from "../utils/constants";

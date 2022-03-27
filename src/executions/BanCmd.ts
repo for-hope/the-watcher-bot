@@ -2,7 +2,7 @@ import { Guild, Permissions, TextChannel } from "discord.js";
 import { botCommands } from "../cmds";
 import { Portal } from "../db/portalClient";
 import { Server } from "../db/serversClient";
-import { TWGuildManager } from "../managers/guild-manager";
+import { TWGuildManager } from "../managers/TWGuildManager";
 import {
   bannedServerEmbed,
   successfullyBannedEmbed,

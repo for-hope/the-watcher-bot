@@ -1,6 +1,6 @@
 import { CommandInteraction } from "discord.js";
 import { IBotCommand } from "../cmds";
-import { TWGuildManager } from "../managers/guild-manager";
+import { TWGuildManager } from "../managers/TWGuildManager";
 import { failedMessageEmbed } from "../utils/bot_embeds";
 import {
   ICustomValidators,
