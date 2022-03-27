@@ -4,12 +4,7 @@ import { botCommands } from "../cmds";
 import { Portal } from "../db/portalClient";
 import { Server } from "../db/serversClient";
 import { TWGuildManager } from "../managers/TWGuildManager";
-import {
-  bannedServerEmbed,
-  mutedServerEmbed,
-  successfullyBannedEmbed,
-  successfullyMutedEmbed,
-} from "../utils/bot_embeds";
+import { mutedServerEmbed, successfullyMutedEmbed } from "../utils/bot_embeds";
 import { PortalValidator } from "../validators/PortalValidator";
 import { IValidationPerms, Validator } from "../validators/Validator";
 import TwCmd, { ICmdStatic } from "./TWCmd";
