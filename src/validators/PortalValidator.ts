@@ -67,13 +67,17 @@ export class PortalValidator {
     if (targetServerId === this.portal?.originServerId)
       return {
         isValid: false,
-        message: "You cannot ban the owner of the portal",
+        message: "You cannot perform this on the owner of the portal",
       };
 
     return {
       isValid: true,
       message: "",
     };
+  };
+
+  public canMute = async (targetServerId: string): Promise<IValidation> => {
+    return this.canBan(targetServerId);
   };
 
   public isNotBanned = async (): Promise<IValidation> => {

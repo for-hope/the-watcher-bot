@@ -127,7 +127,7 @@ const leaveCmd: IBotCommand = {
 
 const banCmd: IBotCommand = {
   name: "ban",
-  usage: "ban <serverId> [reason]",
+  usage: "ban <serverId> [channel] [reason]",
   aliases: ["ban"],
   description: "Ban a server from the current portal.",
   longDescription:
@@ -165,14 +165,50 @@ const banListCmd: IBotCommand = {
     "You can use this command in a portal channel to list all the banned servers.\n",
   args: {
     channel: {
-      name: "channel",  
-      description: "The portal channel you want to list the banned servers from.",
+      name: "channel",
+      description:
+        "The portal channel you want to list the banned servers from.",
       type: SlashCommandOptions.CHANNEL,
       required: false,
     },
   },
 };
 
+const muteCmd: IBotCommand = {
+  name: "mute",
+  usage: "mute <serverId> [channel] [duration] [reason]",
+  aliases: ["mute"],
+  description: "Mute a server from the current portal.",
+  longDescription:
+    "This command will mute a server from the current portal.\n\n" +
+    "You can use this command in a portal channel to mute a server.\n",
+  args: {
+    serverId: {
+      name: "server",
+      description: "The server you want to mute.",
+      type: SlashCommandOptions.STRING,
+      required: true,
+    },
+    channel: {
+      name: "channel",
+      description: "The portal channel you want to mute the server from.",
+      type: SlashCommandOptions.CHANNEL,
+      required: false,
+    },
+    duration: {
+      name: "duration",
+      description: "The duration of the mute. Ex 1h, 1d, 1w...",
+      type: SlashCommandOptions.STRING,
+      required: false,
+    },
+    reason: {
+      name: "reason",
+      description: "The reason you want to give for muting the server.",
+      type: SlashCommandOptions.STRING,
+      required: false,
+    },
+  },
+};
 
 export const botCommands = {
   connect: connectCmd,
@@ -181,6 +217,7 @@ export const botCommands = {
   leave: leaveCmd,
   ban: banCmd,
   banList: banListCmd,
+  mute: muteCmd,
 };
 
 export const slashCommand = (cmd: IBotCommand): ExtendSlashCommandBuilder => {
