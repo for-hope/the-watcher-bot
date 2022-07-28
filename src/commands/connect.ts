@@ -11,6 +11,7 @@ module.exports = {
     try {
       await connectCommand.execute();
     } catch (e) {
+      console.log(e);
       connectCommand.failureReply();
     }
   },

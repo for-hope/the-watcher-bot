@@ -1,5 +1,6 @@
 import { CommandInteraction, GuildTextBasedChannel } from "discord.js";
-import { getAdminRoles } from "../db/serversClient";
+import { Server } from "../db/serversClient";
+
 import { portalRequestAction } from "./actions/portalRequestActions";
 import { portalRequestEmbed } from "./embeds/portalRequestEmbed";
 export class PortalViews {
@@ -12,8 +13,7 @@ export class PortalViews {
 
     const embed = await portalRequestEmbed(interaction, channel);
 
-    const adminRoles = await getAdminRoles(invitedGuildId);
-
+    const adminRoles = (await Server.get(invitedGuildId)).adminRoles;
     const adminRolePings = adminRoles
       ? adminRoles.map((role) => `<@&${role}>`)
       : "";

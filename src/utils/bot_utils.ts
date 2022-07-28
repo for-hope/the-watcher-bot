@@ -49,11 +49,8 @@ export const overwritePortalPermissions = async (
   });
 };
 
-export const getGuild = (client: Client, guildId: string): Guild => {
+export const getGuild = (client: Client, guildId: string): Guild | undefined => {
   const guild = client.guilds.cache.find((guild) => guild.id === guildId);
-  if (!guild) {
-    throw new Error(GUILD_NOT_FOUND);
-  }
   return guild;
 };
 
