@@ -4,12 +4,14 @@ import {
   GuildTextBasedChannel,
   CommandInteraction,
   TextChannel,
+  Client,
 } from "discord.js";
 import mongoose, { model, Document, Model } from "mongoose";
 import { getTextChannel } from "../utils/bot_utils";
 
 import { PortalViews } from "../views/portalViews";
 import { portalRequestCollector } from "../collectors/portalRequest";
+import { TWGuildManager } from "../managers/TWGuildManager";
 
 export const SERVER_MODEL = "Server";
 
@@ -61,7 +63,7 @@ export interface IServerDocument extends IServer, Document {
     channel: GuildTextBasedChannel
   ) => Promise<void>;
   setup: (serverSetup: IServerSetup) => Promise<IServerDocument>;
-  dashboardChannel: () => Promise<TextChannel | null>;
+  dashboardChannel: (client: Client) => Promise<TextChannel | null>;
 }
 
 export interface IServerModel extends Model<IServerDocument> {
@@ -119,10 +121,12 @@ serverSchema.methods.invite = async function (
   interaction: CommandInteraction,
   channelToOpenAPortal: TextChannel
 ): Promise<void> {
+  console.log("inviting");
   const dashboardChannelId = this.dashboardChannelId || "";
   const trafficChannel = getTextChannel(interaction.client, dashboardChannelId);
 
   if (!trafficChannel) {
+    throw new Error("No dashboard channel found");
     return;
   }
   const messageContent = await PortalViews.request(
@@ -173,27 +177,38 @@ serverSchema.statics.allRequestIds = async function () {
 //   return trafficChannel;
 // };
 
-serverSchema.methods.dashboardChannel =
-  async function (): Promise<TextChannel | null> {
+serverSchema.methods.dashboardChannel = async function (
+  client: Client
+): Promise<TextChannel | null> {
+  try {
     const dashboardChannelId = this.dashboardChannelId;
-    const dashboardChannel = getTextChannel(this.serverId, dashboardChannelId);
+    const dashboardChannel = TWGuildManager.getTextChannel(
+      client,
+      dashboardChannelId
+    );
     return dashboardChannel;
-  };
+  } catch (e) {
+    return null;
+  }
+};
 
 serverSchema.methods.setup = async function (
   serverSetup: IServerSetup
 ): Promise<IServerDocument> {
-  const server = await this.upsert({
+  const thisCtx = this as IServerDocument;
+  await thisCtx.updateOne({
     dashboardChannelId: serverSetup.channelId,
     adminRoles: serverSetup.adminRoleIds,
     isSetup: true,
     settings: serverSetup.settings || DEFAULT_SETTINGS,
   });
-  await this.save();
-  return server;
+  await thisCtx.save();
+  return this as IServerDocument;
 };
 
-serverSchema.statics.new = async function (guild: Guild) {
+serverSchema.statics.new = async function (
+  guild: Guild
+): Promise<IServerDocument> {
   //check if server exists by serverId
   const serverId = guild.id;
   const memberCount = guild.memberCount;
@@ -201,7 +216,7 @@ serverSchema.statics.new = async function (guild: Guild) {
   const botJoinedAt = guild.joinedAt;
   const nsfwLevel = guild.nsfwLevel;
   const server = await Server.findOne({ serverId });
-  if (server) return;
+  if (server) return server;
   const newServer = new Server({
     serverId,
     memberCount,

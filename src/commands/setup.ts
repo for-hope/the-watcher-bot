@@ -10,7 +10,7 @@ module.exports = {
       await setupCommand.execute();
       //log execution
     } catch (e) {
-      //console.log(e);
+      console.log(e);
       setupCommand.failureReply();
     }
   },

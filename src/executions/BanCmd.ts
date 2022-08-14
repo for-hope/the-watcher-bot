@@ -79,7 +79,7 @@ export const BanCommand: ICmdStatic = class BanCommand extends TwCmd {
     if (!newPortal) return this._invalidReply(this.DEFAULT_ERROR_MESSAGE);
 
     const bannedServer = await Server.get(this.serverIdToBan);
-    const bannedServerDashboard = await bannedServer.dashboardChannel();
+    const bannedServerDashboard = await bannedServer.dashboardChannel(this.interaction.client);
     this._optionalMessage(bannedServerDashboard);
     this.successReply();
 

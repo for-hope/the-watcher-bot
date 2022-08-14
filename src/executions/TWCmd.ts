@@ -21,9 +21,9 @@ export default abstract class TwCmd {
     customPermFlags: [],
   };
 
-  customValidators: ICustomValidators = {};
+  customValidators: ICustomValidators | undefined;
 
-  validator: Validator;
+  validator: Validator | undefined;
   guildManager: TWGuildManager;
 
   abstract DEFAULT_ERROR_MESSAGE: string;
@@ -31,11 +31,6 @@ export default abstract class TwCmd {
   constructor(interaction: CommandInteraction) {
     this.interaction = interaction;
     this.args();
-    this.validator = new Validator(
-      interaction,
-      this.validationPerms,
-      this.customValidators
-    );
     this.guildManager = new TWGuildManager(this.interaction);
   }
 
@@ -48,8 +43,15 @@ export default abstract class TwCmd {
   };
 
   public async validateAndReply(): Promise<boolean> {
+    this.validator = new Validator(
+      this.interaction,
+      this.validationPerms,
+      this.customValidators
+    );
     const validation = await this.validator.validate();
+
     if (!validation.isValid) {
+      console.log(validation.message);
       await this._invalidReply(validation.message);
       return false;
     }

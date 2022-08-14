@@ -1,5 +1,4 @@
 import {
-  CommandInteraction,
   GuildMember,
   Permissions,
   Role,
@@ -27,12 +26,12 @@ export const SetupCommand: ICmdStatic = class SetupCommand extends TwCmd {
       Permissions.FLAGS.MANAGE_MESSAGES,
     ],
     userPermFlags: [Permissions.FLAGS.MANAGE_GUILD],
-    customPermFlags: [Validator.FLAGS.IS_SERVER_SETUP],
+    customPermFlags: [Validator.FLAGS.IS_SERVER_NOT_SETUP],
   };
   private dashboardChannel: TextChannel | undefined;
   private adminRole: Role | undefined;
 
-  args = (): void => {
+  args(): void {
     const args = SetupCommand.COMMAND.args;
     const interactionOptions = this.interaction.options;
     this.dashboardChannel = interactionOptions.getChannel(
@@ -41,10 +40,6 @@ export const SetupCommand: ICmdStatic = class SetupCommand extends TwCmd {
     this.adminRole = interactionOptions.getRole(args.role.name) as
       | Role
       | undefined;
-  };
-  constructor(interaction: CommandInteraction) {
-    super(interaction);
-    this.args();
   }
 
   public successReply = async () => {
@@ -93,6 +88,7 @@ export const SetupCommand: ICmdStatic = class SetupCommand extends TwCmd {
     };
     const updatedServer = await server.setup(serverSetup);
     if (updatedServer.isSetup) await this.successReply();
+    else await this.failureReply();
     return true;
   };
 };

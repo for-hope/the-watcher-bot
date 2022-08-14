@@ -6,6 +6,7 @@ import {
 } from "discord.js";
 import { botCommands } from "../cmds";
 import { IServerDocument, Server } from "../db/serversClient";
+import { hasManagerPermission } from "../utils/permissions";
 import { PortalValidator } from "./PortalValidator";
 import { ServerValidator } from "./ServerValidator";
 
@@ -60,13 +61,15 @@ export class Validator {
     const notValidMessage = `This server has not been setup yet. Please run /${botCommands.setup.name} to get started.`;
     try {
       const server = await this.server;
-      const dashboard = await server.dashboardChannel();
+      const dashboard = await server.dashboardChannel(this.interaction.client);
+
       return {
         //true if opposite is false and dashboard exists or opposite is true and dashboard does not exist
         isValid: setup ? !!dashboard : !dashboard,
         message: dashboard ? "Server is already setup." : notValidMessage,
       };
     } catch (e) {
+      console.log(e);
       return {
         isValid: setup ? false : true,
         message: notValidMessage,
@@ -75,25 +78,12 @@ export class Validator {
   };
 
   private _botManagerRole = async (): Promise<IValidation> => {
-    const server = await this.server;
-    let adminRoleIds = server.adminRoles;
-    if (!adminRoleIds) {
-      return {
-        isValid: false, //todo  add add  admin role  command
-        message: `This server doesn't have any admin roles. Only server managers can use this command.`,
-      };
-    }
-    const roles = this.interaction?.member?.roles as GuildMemberRoleManager;
-    const hasPerms = roles.cache.some((role: Role) =>
-      adminRoleIds!.includes(role.id)
-    );
+    const isValid = await hasManagerPermission(this.interaction, true);
     return {
-      isValid: hasPerms,
-      message: hasPerms
+      isValid: isValid,
+      message: isValid
         ? "User has required permissions."
-        : `User does not have required permission roles. [${adminRoleIds!.join(
-            ", "
-          )}]`,
+        : "User does not have required permission (MANAGE_GUILD) or roles.",
     };
   };
 
@@ -150,6 +140,7 @@ export class Validator {
     );
     const isValid = validations.every((validation) => validation.isValid);
     const message = validations
+      .filter((validation) => !validation.isValid)
       .map((validation) => validation.message)
       .join("\n");
     return {

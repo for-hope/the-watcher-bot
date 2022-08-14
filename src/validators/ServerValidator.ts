@@ -1,5 +1,4 @@
 import { CommandInteraction } from "discord.js";
-import { IPortalDocument } from "../db/portalClient";
 import { Server } from "../db/serversClient";
 import { getGuild } from "../utils/bot_utils";
 import { IValidation } from "./Validator";
@@ -24,7 +23,8 @@ export class ServerValidator {
     if (!server)
       return {
         isValid: false,
-        message: "Target server does not exist on bot.",
+        message:
+          "Cannot connect to that server! Make sure I'm a member and setup correctly in that server.",
       };
     return {
       isValid: true,
@@ -44,17 +44,21 @@ export class ServerValidator {
     };
   };
 
-  public isServerSetup = async (setup?: boolean): Promise<IValidation> => {
+  public isServerSetup = async (setup: boolean): Promise<IValidation> => {
     const notValidMessage = `The server you're trying to interact with is not setup. Please let an admin know.`;
     try {
-      const server = await Server.get(this.interaction.guildId!);
-      const dashboard = server.dashboardChannelId;
+      const server = await Server.get(this.serverId);
+      const dashboard = await server.dashboardChannel(this.interaction.client);
+
       return {
         //true if opposite is false and dashboard exists or opposite is true and dashboard does not exist
         isValid: setup ? !!dashboard : !dashboard,
-        message: dashboard ? "Server is already setup." : notValidMessage,
+        message: !!dashboard
+          ? `[ServerValidator] Server {${this.serverId}} is already setup.`
+          : notValidMessage,
       };
     } catch (e) {
+      console.error(e);
       return {
         isValid: setup ? false : true,
         message: notValidMessage,
@@ -66,7 +70,7 @@ export class ServerValidator {
     const flagMap: { [key: number]: IValidation } = {
       [ServerValidator.FLAGS.SERVER_EXISTS_BOT]: this.serverExistsOnBot(),
       [ServerValidator.FLAGS.DIFFERENT_SERVER]: this.isDifferentServer(),
-      [ServerValidator.FLAGS.SERVER_SETUP]: await this.isServerSetup(),
+      [ServerValidator.FLAGS.SERVER_SETUP]: await this.isServerSetup(true),
     };
 
     return flagMap[flag];

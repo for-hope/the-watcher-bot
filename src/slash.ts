@@ -19,7 +19,7 @@ export class ExtendSlashCommandBuilder extends SlashCommandBuilder {
             option
               .setName(arg.name)
               .setDescription(arg.description)
-              .addChannelType(ChannelType.GuildText)
+              .addChannelTypes(ChannelType.GuildText)
               .setRequired(!!arg.required)
           );
           break;

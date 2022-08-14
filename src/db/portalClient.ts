@@ -24,21 +24,7 @@ export interface IPortal {
   originServerId: string;
   originChannelId: string;
   openInvitation?: boolean;
-  servers: [
-    {
-      id: string;
-      channel_id: string;
-      server_status: string;
-      requestMessage: {
-        id: string;
-        channel_id: string;
-      };
-      muted?: {
-        mutedOn: number;
-        duration: number;
-      };
-    }
-  ];
+  servers: [IPortalServer];
   //string
   bannedServers: [string];
   bannedUsers: [string];
@@ -152,7 +138,7 @@ portalSchema.methods.leave = async function (serverId: string) {
 };
 
 portalSchema.methods.myServer = function (serverId: string) {
-  return this.servers.find((server: any) => server.server_id === serverId);
+  return this.servers.find((server: any) => server.id === serverId);
 };
 
 portalSchema.methods.banServer = async function (targetServerId: string) {
@@ -162,7 +148,7 @@ portalSchema.methods.banServer = async function (targetServerId: string) {
   portal.bannedServers.push(targetServerId);
   //remove server from portal.servers
   const serverIndex = portal.servers.findIndex(
-    (server: any) => server.server_id === targetServerId
+    (server: any) => server.id === targetServerId
   );
   if (serverIndex > -1) {
     portal.servers.splice(serverIndex, 1);
@@ -217,7 +203,7 @@ portalSchema.methods.updateServerStatus = async function (
   const portal = this;
 
   portal.servers.forEach((server: any) => {
-    if (server.server_id === serverId) {
+    if (server.id === serverId) {
       server.server_status = serverStatus;
       return;
     }
@@ -235,7 +221,7 @@ portalSchema.methods.addServerRequest = async function (
   //remove server if it exists on portal
   portal.servers.forEach((server: any) => {
     if (
-      server.server_id === guildId &&
+      server.id === guildId &&
       server.server_status !== PortalRequest.approved
     ) {
       portal.servers.splice(portal.servers.indexOf(server), 1);
@@ -259,7 +245,7 @@ portalSchema.methods.denyServerRequest = async function (serverId: string) {
   const portal = this;
   portal.servers.forEach((server: any) => {
     if (
-      server.server_id === serverId &&
+      server.id === serverId &&
       server.server_status === PortalRequest.pending
     ) {
       server.server_status = PortalRequest.denied;
@@ -288,7 +274,7 @@ portalSchema.methods.approveServerRequest = async function (
   const portal = this;
   portal.servers.forEach((server: any) => {
     if (
-      server.server_id === guildId &&
+      server.id === guildId &&
       server.server_status === PortalRequest.pending
     ) {
       server.server_status = PortalRequest.approved;
@@ -311,9 +297,7 @@ portalSchema.methods.isServerBlacklisted = function (serverId: string) {
 
 portalSchema.methods.isServerMuted = function (serverId: string) {
   const portal = this;
-  const server = portal.servers.find(
-    (server: any) => server.server_id === serverId
-  );
+  const server = portal.servers.find((server: any) => server.id === serverId);
   if (server) {
     const muted = server.muted;
     if (!muted) return false;
@@ -325,9 +309,7 @@ portalSchema.methods.isServerMuted = function (serverId: string) {
 
 portalSchema.methods.isServerLeft = function (serverId: string) {
   const portal = this;
-  const server = portal.servers.find(
-    (server: any) => server.server_id === serverId
-  );
+  const server = portal.servers.find((server: any) => server.id === serverId);
   if (server) {
     return server.server_status === PortalRequest.left;
   }
@@ -372,7 +354,6 @@ portalSchema.statics.newPortal = async function (
     const authorId = interaction.user.id;
     const serverId = interaction.guildId;
     let portal = await Portal.findOne({ "servers.channel_id": channel.id });
-
     if (portal) {
       return portal;
     }
@@ -384,10 +365,10 @@ portalSchema.statics.newPortal = async function (
       originChannelId: channel.id,
       servers: [
         {
-          server_id: serverId,
+          id: serverId,
           channel_id: channel.id,
           server_status: PortalRequest.approved,
-        },
+        } as IPortalServer,
       ],
       bannedUsers: [],
       bannedServers: [],
@@ -397,6 +378,7 @@ portalSchema.statics.newPortal = async function (
 
     return portal;
   } catch (error) {
+    console.log(error);
     return null;
   }
 };
@@ -527,7 +509,7 @@ export const createServerOnPortal = async (
       originChannelId: channelId,
       servers: [
         {
-          server_id: serverId,
+          id: serverId,
           channel_id: channelId,
           server_status: PortalRequest.approved,
         },
@@ -550,7 +532,7 @@ export const portalsByServerId = async (
 ): Promise<Array<IPortalDocument> | null> => {
   try {
     const portals = await Portal.find({
-      "servers.server_id": serverId,
+      "servers.id": serverId,
     });
     return portals;
   } catch (err) {

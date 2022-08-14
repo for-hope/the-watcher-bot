@@ -174,7 +174,6 @@ export class ConnectValidator {
       return true;
     } catch (e) {
       this.errReply(OTHER_SERVER_NOT_SETUP);
-
       return false;
     }
   }

@@ -69,7 +69,7 @@ export const MuteCommand: ICmdStatic = class MuteCommand extends TwCmd {
     if (!newPortal || !portal)
       return this._invalidReply(this.DEFAULT_ERROR_MESSAGE);
     const server = await Server.get(this.serverIdToMute);
-    const dashboard = await server.dashboardChannel();
+    const dashboard = await server.dashboardChannel(this.interaction.client);
     if (!dashboard) {
       return true;
     }

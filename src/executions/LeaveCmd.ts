@@ -57,7 +57,7 @@ export const LeaveCommand: ICmdStatic = class LeaveCmd extends TwCmd {
     await portal?.leave(this.interaction.guildId!);
 
     const server = await Server.get(this.interaction.guildId!);
-    const dashboard = await server.dashboardChannel();
+    const dashboard = await server.dashboardChannel(this.interaction.client);
     const author = this.interaction.user as User;
     if (dashboard) {
       dashboard.send(
