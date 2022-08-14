@@ -37,7 +37,7 @@
 </p>
 
 # Overview
-
+[Homepage](https://www.thewatcher.xyz/)
 > Note: The Watcher Bot is still in alpha and more developement is needed for a stable version.
 
 The Watcher bot enables discord users to chat between servers using shared channels without joining all of them. An admin can create a shared channel and invite multipule servers, these servers
